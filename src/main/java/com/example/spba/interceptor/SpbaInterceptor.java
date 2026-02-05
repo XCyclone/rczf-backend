@@ -43,7 +43,7 @@ public class SpbaInterceptor implements HandlerInterceptor
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
         // System.out.println("访问到Controller之后，渲染视图之前");
         if (!request.getMethod().equals("GET")) {
-            asyncTask.saveOperateLog(StpUtil.getLoginIdAsLong(), request.getRequestURI(), request.getMethod(),
+            asyncTask.saveOperateLog(StpUtil.getLoginIdAsString(), request.getRequestURI(), request.getMethod(),
                                    JSONUtil.parse(request.getParameterMap()).toBean(String.class),
                                    ServletUtil.getClientIP(request));
         }

@@ -56,15 +56,15 @@ public class AsyncTask
 
     /**
      * 异步保存操作日志
-     * @param adminId
+     * @param userId
      * @param url
      * @param method
      * @param params
      * @param ip
      */
     @Async
-    public void saveOperateLog(Long adminId, String url, String method, String params, String ip)
+    public void saveOperateLog(String userId, String url, String method, String params, String ip)
     {
-        operateLogService.save(adminId, url, method, params, ip);
+        operateLogService.save(userId, url, method, params, ip);
     }
 }

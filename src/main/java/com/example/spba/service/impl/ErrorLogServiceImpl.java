@@ -21,6 +21,7 @@ public class ErrorLogServiceImpl extends ServiceImpl<ErrorLogMapper, ErrorLog> i
         error.setParams(params);
         error.setMessage(message);
         error.setException(exception);
+        error.setCreateTime(new java.util.Date());
         this.save(error);
     }
 

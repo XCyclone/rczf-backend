@@ -83,7 +83,7 @@ public class LogController
      * @return
      */
     @GetMapping("/operate/logs")
-    public R getAdminList(String username, String start, String end,
+    public R getOperateLogList(String username, String start, String end,
                           @RequestParam(name = "page", defaultValue = "1") Integer page,
                           @RequestParam(name = "size", defaultValue = "15") Integer size)
     {

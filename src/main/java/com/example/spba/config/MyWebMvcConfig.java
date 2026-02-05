@@ -1,5 +1,6 @@
 package com.example.spba.config;
 
+import com.example.spba.interceptor.EnhancedUserContextInterceptor;
 import com.example.spba.interceptor.SpbaInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,12 @@ public class MyWebMvcConfig implements WebMvcConfigurer
     {
         return new SpbaInterceptor();
     }
+    
+    @Bean
+    public EnhancedUserContextInterceptor enhancedUserContextInterceptor()
+    {
+        return new EnhancedUserContextInterceptor();
+    }
 
     /**
      * 拦截器
@@ -24,9 +31,20 @@ public class MyWebMvcConfig implements WebMvcConfigurer
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册拦截器
+        // 注册增强版用户上下文拦截器（最先执行）
+        registry.addInterceptor(enhancedUserContextInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/login")
+                .excludePathPatterns("/business/user/register")
+                .excludePathPatterns("/public/**")  // 公共接口不需要用户上下文
+                .excludePathPatterns("/demo/**");   // 演示接口可以排除
+        
+        // 注册原有的业务拦截器
         registry.addInterceptor(spbaInterceptor())
                 .addPathPatterns("/**")
-                .excludePathPatterns("/login");
+                .excludePathPatterns("/login")
+                .excludePathPatterns("/business/user/register")
+                .excludePathPatterns("/public/**")
+                .excludePathPatterns("/demo/**");
     }
 }

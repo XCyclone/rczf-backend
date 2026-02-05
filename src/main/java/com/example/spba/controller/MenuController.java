@@ -16,7 +16,7 @@ import java.util.List;
 
 @Validated
 @RestController
-public class MenuController
+public class  MenuController
 {
 
     @Autowired

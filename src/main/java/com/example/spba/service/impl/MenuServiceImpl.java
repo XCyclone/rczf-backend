@@ -1,6 +1,7 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.spba.constant.ProjectConstants;
 import com.example.spba.domain.entity.Menu;
 import com.example.spba.dao.MenuMapper;
 import com.example.spba.service.MenuService;
@@ -49,7 +50,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
         }
 
         result.put("data", menu);
-        result.put("status", true);
+        result.put("status", ProjectConstants.CommonStatus.SUCCESS);
         return result;
     }
 }

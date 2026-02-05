@@ -23,14 +23,15 @@ public class SaTokenConfigure implements WebMvcConfigurer
         registry.addInterceptor(new SaRouteInterceptor((req, res, handler) ->
         {
             // 登录认证 -- 拦截所有路由，并排除/login 用于开放登录
-            SaRouter.match("/**", "/login", r -> StpUtil.checkLogin());
+            // 已关闭登录拦截
+            // SaRouter.match("/**", "/login", r -> StpUtil.checkLogin());
 
             // 权限认证：匹配restful风格路由、多个条件一起使用
-            SaRouter.match(SaHttpMethod.GET).match("/admins").check(r ->StpUtil.checkPermission("admin:list"));
-            SaRouter.match(SaHttpMethod.POST).match("/admin").check(r ->StpUtil.checkPermission("admin:add"));
-            SaRouter.match(SaHttpMethod.PUT).match("/admin").check(r ->StpUtil.checkPermission("admin:edit"));
-            SaRouter.match(SaHttpMethod.GET).match("/admin/{id}").check(r ->StpUtil.checkPermission("admin:query"));
-            SaRouter.match(SaHttpMethod.DELETE).match("/admin/{id}").check(r ->StpUtil.checkPermission("admin:del"));
+            SaRouter.match(SaHttpMethod.GET).match("/users").check(r ->StpUtil.checkPermission("user:list"));
+            SaRouter.match(SaHttpMethod.POST).match("/user").check(r ->StpUtil.checkPermission("user:add"));
+            SaRouter.match(SaHttpMethod.PUT).match("/user").check(r ->StpUtil.checkPermission("user:edit"));
+            SaRouter.match(SaHttpMethod.GET).match("/user/{id}").check(r ->StpUtil.checkPermission("user:query"));
+            SaRouter.match(SaHttpMethod.DELETE).match("/user/{id}").check(r ->StpUtil.checkPermission("user:del"));
 
             SaRouter.match(SaHttpMethod.GET).match("/roles").check(r ->StpUtil.checkPermission("role:list"));
             SaRouter.match(SaHttpMethod.POST).match("/role").check(r ->StpUtil.checkPermission("role:add"));

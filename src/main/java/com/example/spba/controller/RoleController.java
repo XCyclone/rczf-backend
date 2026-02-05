@@ -1,20 +1,21 @@
 package com.example.spba.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.domain.entity.Role;
+import com.example.spba.domain.entity.RoleUserRel;
 import com.example.spba.domain.dto.RoleDTO;
-import com.example.spba.service.AdminService;
+import com.example.spba.service.UserService;
 import com.example.spba.service.RoleService;
-import com.example.spba.utils.Function;
+import com.example.spba.service.RoleUserRelService;
 import com.example.spba.utils.R;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,25 +28,25 @@ public class RoleController
     private RoleService roleService;
 
     @Autowired
-    private AdminService adminService;
+    private UserService userService;
+
+    @Autowired
+    private RoleUserRelService roleUserRelService;
 
     /**
      * 获取角色列表
      * @param name
-     * @param status
      * @param page
      * @param size
      * @return
      */
     @GetMapping("/roles")
-    public R getRoleList(String name, Integer root, Integer status,
+    public R getRoleList(String name,
                          @RequestParam(name = "page", defaultValue = "1") Integer page,
                          @RequestParam(name = "size", defaultValue = "15") Integer size)
     {
         HashMap where = new HashMap();
         where.put("name", name);
-        where.put("root", root);
-        where.put("status", status);
 
         Page<HashMap> pages = new Page<>(page, size);
         Page<HashMap> list = roleService.getList(pages, where);
@@ -59,15 +60,13 @@ public class RoleController
      * @return
      */
     @GetMapping("/role/{id}")
-    public R getRoleInfo(@PathVariable("id") @Min(value = 1, message = "参数错误") Integer roleId)
+    public R getRoleInfo(@PathVariable("id") @NotBlank(message = "参数错误") String roleId)
     {
         HashMap data = new HashMap();
         Role info = roleService.getById(roleId);
         if (info != null) {
-            data = JSONUtil.parse(info).toBean(HashMap.class);
-            data.put("menuIds", JSONUtil.parse(info.getPermission()).toBean(List.class));
-            data.remove("root");
-            data.remove("permission");
+            data.put("roleId", info.getRoleId());
+            data.put("name", info.getName());
         }
 
         return R.success(data);
@@ -81,9 +80,15 @@ public class RoleController
     @PostMapping("/role")
     public R addRole(@Validated(RoleDTO.Save.class) RoleDTO form)
     {
+        // 检查角色ID是否已存在
+        Role existRole = roleService.getById(form.getRoleId());
+        if (existRole != null) {
+            return R.error("角色ID已存在");
+        }
+
         Role role = new Role();
-        BeanUtils.copyProperties(form, role);
-        role.setPermission(JSONUtil.parse(Function.strToIntArr(form.getMenuIds(), ",")).toString());
+        role.setRoleId(form.getRoleId());
+        role.setName(form.getName());
         roleService.save(role);
 
         return R.success();
@@ -97,24 +102,15 @@ public class RoleController
     @PutMapping("/role")
     public R editRole(@Validated(RoleDTO.Update.class) RoleDTO form)
     {
-        // 不允许编辑超管
-        Role info = roleService.getById(form.getId());
-        if (info == null || info.getRoot().equals(1)) {
-            return R.error();
+        Role info = roleService.getById(form.getRoleId());
+        if (info == null) {
+            return R.error("角色不存在");
         }
 
         Role role = new Role();
-        BeanUtils.copyProperties(form, role);
-        role.setPermission(JSONUtil.parse(Function.strToIntArr(form.getMenuIds(), ",")).toString());
+        role.setRoleId(form.getRoleId());
+        role.setName(form.getName());
         roleService.updateById(role);
-
-        // 停用角色，将与本角色相关的所有管理员强制注销下线
-        if (form.getStatus().equals(0)) {
-            List<HashMap> admins = adminService.getRoleAdminAll(form.getId().intValue());
-            for (HashMap admin : admins) {
-                StpUtil.logout(admin.get("id"));
-            }
-        }
 
         return R.success();
     }
@@ -125,18 +121,22 @@ public class RoleController
      * @return
      */
     @DeleteMapping("/role/{id}")
-    public R delRole(@PathVariable("id") @Min(value = 1, message = "参数错误") Integer roleId)
+    public R delRole(@PathVariable("id") @NotBlank(message = "参数错误") String roleId)
     {
-        // 不允许删除超管
         Role info = roleService.getById(roleId);
-        if (info == null || info.getRoot().equals(1)) {
-            return R.error();
+        if (info == null) {
+            return R.error("角色不存在");
         }
 
-        List<HashMap> admins = adminService.getRoleAdminAll(roleId);
-        if (admins.size() > 0) {
-            return R.error("有管理员使用此角色，无法删除");
+        List<HashMap> users = userService.getRoleUserAll(roleId);
+        if (users.size() > 0) {
+            return R.error("有用户使用此角色，无法删除");
         }
+
+        // 删除角色关联关系
+        QueryWrapper<RoleUserRel> wrapper = new QueryWrapper<>();
+        wrapper.eq("role_id", roleId);
+        roleUserRelService.remove(wrapper);
 
         Boolean res = roleService.removeById(roleId);
         if (res.equals(true)) {

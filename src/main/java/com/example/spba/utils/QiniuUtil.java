@@ -42,49 +42,49 @@ public class QiniuUtil
      * 获取token
      * @return
      */
-    public static String getToken()
-    {
-        String tokenKey = "spba:qiniu:token";
-        Object tokenObj = redisUtil.get(tokenKey);
-        if (tokenObj != null) {
-            return tokenObj.toString();
-        } else {
-            Auth auth = Auth.create(accessKey, secretKey);
-            String tokenVal = auth.uploadToken(bucketName);
-            if (tokenVal != null) {
-                redisUtil.set(tokenKey, tokenVal, 3500);
-            }
-            return tokenVal;
-        }
-    }
+//    public static String getToken()
+//    {
+//        String tokenKey = "spba:qiniu:token";
+//        Object tokenObj = redisUtil.get(tokenKey);
+//        if (tokenObj != null) {
+//            return tokenObj.toString();
+//        } else {
+//            Auth auth = Auth.create(accessKey, secretKey);
+//            String tokenVal = auth.uploadToken(bucketName);
+//            if (tokenVal != null) {
+//                redisUtil.set(tokenKey, tokenVal, 3500);
+//            }
+//            return tokenVal;
+//        }
+//    }
 
-    /**
-     * 上传图片
-     * 数据流上传
-     * @param file
-     * @param namespace
-     * @return
-     */
-    public static String uploadImageByFile(FileInputStream file, String namespace)
-    {
-        // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
-        Configuration cfg = new Configuration(Region.region1());
-        // 其他参数参考类注释
-        UploadManager uploadManager = new UploadManager(cfg);
-        // 生成上传凭证
-        String upToken = getToken();
-        // 生成key
-        String key = getImagePath(namespace);
-        try {
-            Response response = uploadManager.put(file, key, upToken, null, null);
-            // 解析上传成功的结果
-            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-            return putRet.key;
-        } catch (QiniuException ex) {
-            Response r = ex.response;
-            return null;
-        }
-    }
+//    /**
+//     * 上传图片
+//     * 数据流上传
+//     * @param file
+//     * @param namespace
+//     * @return
+//     */
+//    public static String uploadImageByFile(FileInputStream file, String namespace)
+//    {
+//        // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
+//        Configuration cfg = new Configuration(Region.region1());
+//        // 其他参数参考类注释
+//        UploadManager uploadManager = new UploadManager(cfg);
+//        // 生成上传凭证
+//        String upToken = getToken();
+//        // 生成key
+//        String key = getImagePath(namespace);
+//        try {
+//            Response response = uploadManager.put(file, key, upToken, null, null);
+//            // 解析上传成功的结果
+//            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+//            return putRet.key;
+//        } catch (QiniuException ex) {
+//            Response r = ex.response;
+//            return null;
+//        }
+//    }
 
     /**
      * 上传图片
@@ -93,26 +93,26 @@ public class QiniuUtil
      * @param namespace
      * @return
      */
-    public static String uploadImageByPath(String localFilePath, String namespace)
-    {
-        // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
-        Configuration cfg = new Configuration(Region.region1());
-        // 其他参数参考类注释
-        UploadManager uploadManager = new UploadManager(cfg);
-        // 生成上传凭证
-        String upToken = getToken();
-        // 生成key
-        String key = getImagePath(namespace);
-        try {
-            Response response = uploadManager.put(localFilePath, key, upToken);
-            //解析上传成功的结果
-            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-            return putRet.key;
-        } catch (QiniuException ex) {
-            Response r = ex.response;
-            return null;
-        }
-    }
+//    public static String uploadImageByPath(String localFilePath, String namespace)
+//    {
+//        // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
+//        Configuration cfg = new Configuration(Region.region1());
+//        // 其他参数参考类注释
+//        UploadManager uploadManager = new UploadManager(cfg);
+//        // 生成上传凭证
+//        String upToken = getToken();
+//        // 生成key
+//        String key = getImagePath(namespace);
+//        try {
+//            Response response = uploadManager.put(localFilePath, key, upToken);
+//            //解析上传成功的结果
+//            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+//            return putRet.key;
+//        } catch (QiniuException ex) {
+//            Response r = ex.response;
+//            return null;
+//        }
+//    }
 
     /**
      * 生成图片存储路径

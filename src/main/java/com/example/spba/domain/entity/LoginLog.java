@@ -1,30 +1,39 @@
 package com.example.spba.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * 登录日志表
+ */
 @Data
-public class LoginLog implements Serializable
-{
-    private static final long serialVersionUID = 470786259004016587L;
+@TableName("int_login_log")
+public class LoginLog implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    /** ID */
+    /**
+     * 主键ID
+     */
     @TableId(type = IdType.AUTO)
-    private Long id;
+    private Integer id;
 
-    /** 管理员ID */
-    private Integer adminId;
+    /**
+     * 用户ID
+     */
+    private String userId;
 
-    /** 登录IP */
+    /**
+     * 登录IP
+     */
     private String loginIp;
 
-    /** 创建时间 */
-    @TableField(fill = FieldFill.INSERT)
+    /**
+     * 创建时间
+     */
     private Date createTime;
 }

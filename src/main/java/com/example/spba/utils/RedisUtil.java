@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,18 +78,38 @@ public class RedisUtil
      * 删除缓存
      * @param key 可以传一个值或多个
      */
-    /*@SuppressWarnings("unchecked")
-    public void del(String... key)
-    {
-        if (key != null && key.length > 0) {
-            if (key.length == 1) {
-                redisTemplate.delete(key[0]);
-            } else {
-                redisTemplate.delete(CollectionUtils.arrayToList(key));
+    public boolean deleteObject(String key) {
+        try {
+            if (key != null) {
+                redisTemplate.delete(key);
             }
+            return true;
+        } catch (Exception e) {
+            log.error(key, e);
+            return false;
         }
-    }*/
-
+    }
+    
+    /**
+     * 删除多个缓存
+     * @param keys 可以传多个key
+     */
+    @SuppressWarnings("unchecked")
+    public boolean deleteObjects(String... keys) {
+        try {
+            if (keys != null && keys.length > 0) {
+                if (keys.length == 1) {
+                    redisTemplate.delete(keys[0]);
+                } else {
+                    redisTemplate.delete((Collection<String>) CollectionUtils.arrayToList(keys));
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            log.error("批量删除异常", e);
+            return false;
+        }
+    }
 
 
     // ===================================String===================================
@@ -100,7 +121,7 @@ public class RedisUtil
      * @param key
      * @return
      */
-    public Object get(String key)
+    public Object getString(String key)
     {
         return key == null ? null : redisTemplate.opsForValue().get(key);
     }
@@ -111,7 +132,7 @@ public class RedisUtil
      * @param value
      * @return
      */
-    public boolean set(String key, Object value) {
+    public boolean setString(String key, Object value) {
         try {
             redisTemplate.opsForValue().set(key, value);
             return true;
@@ -129,13 +150,13 @@ public class RedisUtil
      * @param time 时间(秒) time要大于0，如果time小于等于0，将设置无限期
      * @return
      */
-    public boolean set(String key, Object value, long time)
+    public boolean setString(String key, Object value, long time)
     {
         try {
             if (time > 0) {
                 redisTemplate.opsForValue().set(key, value, time, TimeUnit.SECONDS);
             } else {
-                set(key, value);
+                setString(key, value);
             }
             return true;
         } catch (Exception e) {
@@ -172,7 +193,50 @@ public class RedisUtil
         return redisTemplate.opsForValue().increment(key, -delta);
     }
 
+    // ===================================验证码相关操作===================================
 
+    /**
+     * 存储验证码
+     * @param key 验证码ID
+     * @param value 验证码值
+     * @param expireTime 过期时间（秒）
+     * @return
+     */
+    public boolean setCaptcha(String key, String value, long expireTime) {
+        try {
+            redisTemplate.opsForValue().set(key, value, expireTime, TimeUnit.SECONDS);
+            return true;
+        } catch (Exception e) {
+            log.error("存储验证码异常", e);
+            return false;
+        }
+    }
+
+    /**
+     * 获取验证码
+     * @param key 验证码ID
+     * @return 验证码值
+     */
+    public String getCaptcha(String key) {
+        Object value = redisTemplate.opsForValue().get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    /**
+     * 验证并删除验证码
+     * @param key 验证码ID
+     * @param inputValue 用户输入的验证码
+     * @return 验证结果
+     */
+    public boolean validateAndDeleteCaptcha(String key, String inputValue) {
+        String storedValue = getCaptcha(key);
+        if (storedValue != null && storedValue.equalsIgnoreCase(inputValue)) {
+            // 验证成功后删除验证码，防止重复使用
+            deleteObject(key);
+            return true;
+        }
+        return false;
+    }
 
     // ===================================Map===================================
 

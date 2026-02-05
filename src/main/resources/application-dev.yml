@@ -22,9 +22,9 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1:3306/spba?serverTimezone=UTC&useUniode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
-      username: root
-      password: 123456
+      url: jdbc:mysql://47.107.48.138:4886/talent_house?serverTimezone=UTC&useUniode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
+      username: rczf
+      password: rczf@2026
       # 初始连接数
       initial-size: 2
       # 最小连接池数量
@@ -86,7 +86,7 @@ sa-token:
   # token名称 (同时也是cookie名称)
   token-name: satoken
   # token有效期，单位s 默认30天, -1代表永不过期
-  timeout: 2592000
+  timeout: 259200
   # token临时有效期 (指定时间内无操作就视为token过期) 单位: 秒
   activity-timeout: 900
   # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)

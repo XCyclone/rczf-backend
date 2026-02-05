@@ -1,7 +1,7 @@
 package com.example.spba.service.impl;
 
 import cn.dev33.satoken.stp.StpInterface;
-import com.example.spba.service.AdminService;
+import com.example.spba.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ public class StpInterfaceImpl implements StpInterface
 {
 
     @Autowired
-    private AdminService adminService;
+    private UserService userService;
 
     /**
      * 返回一个账号所拥有的权限码集合
@@ -26,7 +26,7 @@ public class StpInterfaceImpl implements StpInterface
     public List<String> getPermissionList(Object loginId, String loginType)
     {
         List<String> list = new ArrayList<String>();
-        List<HashMap> menus = adminService.getPermissionList(Integer.valueOf(loginId.toString()));
+        List<HashMap> menus = userService.getPermissionList(loginId.toString());
         for (HashMap menu : menus) {
             if (menu.get("perms") != null && menu.get("perms").toString().length() > 0) {
                 list.add(menu.get("perms").toString());

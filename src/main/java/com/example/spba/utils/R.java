@@ -19,7 +19,7 @@ public class R
     public static R success(Object data) { return success(data,"请求成功"); }
     public static R success(Object data, String message) {
         R r = new R();
-        r.setCode(200);
+        r.setCode(0);
         r.setMessage(message);
         r.setData(data);
         return r;
