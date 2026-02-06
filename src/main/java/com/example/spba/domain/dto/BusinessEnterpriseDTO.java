@@ -74,18 +74,6 @@ public class BusinessEnterpriseDTO {
     /** 注册类型：1-企业；2-机关单位 */
     @NotNull(message = "请选择注册类型", groups = Save.class)
     private Integer regCategory;
-
-    /** 企业标签1 */
-    @Size(max = 32, message = "企业标签1长度不能超过32个字符", groups = Save.class)
-    private String tag1;
-
-    /** 企业标签2 */
-    @Size(max = 32, message = "企业标签2长度不能超过32个字符", groups = Save.class)
-    private String tag2;
-
-    /** 企业标签3 */
-    @Size(max = 32, message = "企业标签3长度不能超过32个字符", groups = Save.class)
-    private String tag3;
     
     /** 验证码ID */
     @NotBlank(message = "验证码ID不能为空", groups = Save.class)

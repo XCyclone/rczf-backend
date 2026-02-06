@@ -2,21 +2,10 @@ package com.example.spba.interceptor;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.example.spba.utils.UserContextUtil;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-/**
- * 增强版用户上下文拦截器
- * 支持从多种途径获取用户信息：
- * 1. 请求头（X-User-ID, X-User-Name, X-User-Type）
- * 2. Sa-Token登录状态
- * 3. JWT Token解析
- * 4. Session等方式
- */
-@Component
 public class EnhancedUserContextInterceptor implements HandlerInterceptor {
 
     @Override

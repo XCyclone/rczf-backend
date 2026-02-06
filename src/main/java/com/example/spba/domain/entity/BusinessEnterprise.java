@@ -70,15 +70,6 @@ public class BusinessEnterprise implements Serializable {
     /** 当前状态：0-提交/待审核；1-审核通过 */
     private Integer status;
 
-    /** 企业标签1 */
-    private String tag1;
-
-    /** 企业标签2 */
-    private String tag2;
-
-    /** 企业标签3 */
-    private String tag3;
-
     /** 保留字段1 */
     private String reserve1;
 
@@ -88,12 +79,4 @@ public class BusinessEnterprise implements Serializable {
     /** 保留字段3 */
     private String reserve3;
 
-    /** 保留字段4 */
-    private String reserve4;
-
-    /** 保留字段5 */
-    private String reserve5;
-
-    /** 保留字段6 */
-    private String reserve6;
 }

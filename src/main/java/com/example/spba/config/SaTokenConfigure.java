@@ -24,7 +24,7 @@ public class SaTokenConfigure implements WebMvcConfigurer
         {
             // 登录认证 -- 拦截所有路由，并排除/login 用于开放登录
             // 已关闭登录拦截
-            // SaRouter.match("/**", "/login", r -> StpUtil.checkLogin());
+             SaRouter.match("/**", "/login", r -> StpUtil.checkLogin());
 
             // 权限认证：匹配restful风格路由、多个条件一起使用
             SaRouter.match(SaHttpMethod.GET).match("/users").check(r ->StpUtil.checkPermission("user:list"));
