@@ -66,11 +66,11 @@ public class BusinessUserDTO
     @Size(max = 128, message = "工作单位名称长度不能超过128个字符", groups = Save.class)
     private String companyName;
     
-    /** 验证码ID */
-    @NotBlank(message = "验证码ID不能为空", groups = Save.class)
-    private String captchaId;
-    
-    /** 用户输入的验证码 */
-    @NotBlank(message = "验证码不能为空", groups = Save.class)
-    private String captchaCode;
+//    /** 验证码ID */
+//    @NotBlank(message = "验证码ID不能为空", groups = Save.class)
+//    private String captchaId;
+//
+//    /** 用户输入的验证码 */
+//    @NotBlank(message = "验证码不能为空", groups = Save.class)
+//    private String captchaCode;
 }

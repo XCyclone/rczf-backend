@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
+
 @RestController
 @RequestMapping("/business/user")
 public class BusinessUserController
@@ -35,17 +37,11 @@ public class BusinessUserController
     @PostMapping("/register/apply")
     public R register(@Validated(BusinessUserDTO.Save.class) @RequestBody BusinessUserDTO form)
     {
-        // 验证验证码
-        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
-        if (!isCaptchaValid) {
-            return R.error("验证码错误或已失效");
-        }
-        
-        // 验证手机号是否已注册
-        BusinessUser existUser = businessUserService.getByMobile(form.getMobile());
-        if (existUser != null) {
-            return R.error("该手机号已被注册");
-        }
+//        // 验证验证码
+//        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
+//        if (!isCaptchaValid) {
+//            return R.error("验证码错误或已失效");
+//        }
 
         // 验证证件号码是否已注册
         BusinessUser existIdNumber = businessUserService.getByIdNumber(form.getIdNumber());
@@ -62,13 +58,13 @@ public class BusinessUserController
      * @return
      */
     @PostMapping("/register/approve")
-    public R approve(@Validated @RequestBody BusinessUserApproveDTO form)
+    public R approve(@RequestAttribute(CURRENT_USER_ID) String userId, @Validated @RequestBody BusinessUserApproveDTO form)
     {
         try {
             businessUserService.approve(
                 form.getBusinessUserId(), // 这里现在是applyId
                 form.isApproved(),
-                form.getInfo()
+                form.getInfo(), userId
             );
             
             String message = form.isApproved() ? "审批成功" : "已拒绝该注册申请";

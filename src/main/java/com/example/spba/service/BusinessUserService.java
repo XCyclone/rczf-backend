@@ -35,7 +35,7 @@ public interface BusinessUserService
      * @param approveStatus 审批状态：true-通过，false-拒绝
      * @param info 审批附言
      */
-    void approve(String applyId, boolean approveStatus, String info);
+    void approve(String applyId, boolean approveStatus, String info, String userId);
     
     /**
      * 根据用户ID查询用户详细信息

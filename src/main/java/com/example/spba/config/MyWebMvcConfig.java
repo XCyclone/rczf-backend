@@ -46,6 +46,8 @@ public class MyWebMvcConfig implements WebMvcConfigurer
                 .excludePathPatterns("/business/enterprise/register/apply")
                 .excludePathPatterns("/business/enterprise/addTag")
                 .excludePathPatterns("/business/enterprise/register/approve")
+                .excludePathPatterns("/business/user/register/apply")
+                .excludePathPatterns("/business/user/register/approve")
                 .excludePathPatterns("/public/**")  // 公共接口不需要token验证
                 .excludePathPatterns("/demo/**")    // 演示接口可以排除
                 .excludePathPatterns("/captcha/**") // 验证码接口
@@ -61,6 +63,8 @@ public class MyWebMvcConfig implements WebMvcConfigurer
                 .excludePathPatterns("/business/user/register")
                 .excludePathPatterns("/business/enterprise/register/apply")
                 .excludePathPatterns("/business/enterprise/register/approve")
+                .excludePathPatterns("/business/user/register/apply")
+                .excludePathPatterns("/business/user/register/approve")
                 .excludePathPatterns("/business/enterprise/addTag")
                 .excludePathPatterns("/public/**")  // 公共接口不需要用户上下文
                 .excludePathPatterns("/demo/**");   // 演示接口可以排除
@@ -73,6 +77,8 @@ public class MyWebMvcConfig implements WebMvcConfigurer
                 .excludePathPatterns("/business/enterprise/register/apply")
                 .excludePathPatterns("/business/enterprise/register/approve")
                 .excludePathPatterns("/business/enterprise/addTag")
+                .excludePathPatterns("/business/user/register/apply")
+                .excludePathPatterns("/business/user/register/approve")
                 .excludePathPatterns("/public/**")
                 .excludePathPatterns("/demo/**");
     }

@@ -3,10 +3,12 @@ package com.example.spba.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.spba.dao.BusinessEnterpriseMapper;
 import com.example.spba.dao.BusinessUserApplyMapper;
 import com.example.spba.dao.BusinessUserMapper;
 import com.example.spba.domain.dto.BusinessUserDTO;
 import com.example.spba.domain.dto.BusinessUserUpdateDTO;
+import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.domain.entity.BusinessUserApply;
 import com.example.spba.domain.entity.User;
 import com.example.spba.domain.entity.BusinessUser;
@@ -37,6 +39,9 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
     @Autowired
     private BusinessUserMapper businessUserMapper;
+
+    @Autowired
+    private BusinessEnterpriseMapper businessEnterpriseMapper;
     
 
 
@@ -63,7 +68,15 @@ public class BusinessUserServiceImpl implements BusinessUserService
     public R register(BusinessUserDTO form) {
         // 创建用户申请实体
         BusinessUserApply apply = new BusinessUserApply();
-        
+
+        QueryWrapper<BusinessEnterprise> wrapper = new QueryWrapper<>();
+        wrapper.eq("enterprise_name", form.getCompanyName());
+        BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectOne(wrapper);
+        if(businessEnterprise == null){
+            return R.error("该工作单位不存在");
+        }
+        form.setCompanyId(businessEnterprise.getId());
+
         // 生成申请ID和用户ID
         String applyId = UUID.randomUUID().toString().replace("-", "");
         String userId = UUID.randomUUID().toString().replace("-", "");
@@ -101,12 +114,15 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(String applyId, boolean approveStatus, String info)
+    public void approve(String applyId, boolean approveStatus, String info, String userId)
     {
         // 1. 查询申请记录
         BusinessUserApply apply = businessUserApplyMapper.selectById(applyId);
         if (apply == null) {
             throw new IllegalArgumentException("申请记录不存在");
+        }
+        if (userId != apply.getCompanyId()){
+            throw new IllegalArgumentException("您没有权限审批该申请");
         }
         
         // 2. 检查申请状态
@@ -193,10 +209,10 @@ public class BusinessUserServiceImpl implements BusinessUserService
             throw new IllegalArgumentException("注册类型不能为空");
         }
 
-        // 检查用户账号是否已存在（根据手机号）
-        String username = user.getMobile();
+        // 检查用户账号是否已存在（根据身份证号）
+        String username = user.getIdNumber();
         if (!StringUtils.hasText(username)) {
-            throw new IllegalArgumentException("业务用户手机号为空，无法创建用户账号");
+            throw new IllegalArgumentException("业务用户身份证号为空，无法创建用户账号");
         }
 
         QueryWrapper<User> userWrapper = new QueryWrapper<>();

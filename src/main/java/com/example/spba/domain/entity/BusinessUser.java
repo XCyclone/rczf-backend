@@ -74,12 +74,4 @@ public class BusinessUser implements Serializable
     /** 保留字段3 */
     private String reserve3;
 
-    /** 保留字段4 */
-    private String reserve4;
-
-    /** 保留字段5 */
-    private String reserve5;
-
-    /** 保留字段6 */
-    private String reserve6;
 }

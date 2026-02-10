@@ -69,6 +69,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         return businessEnterpriseMapper.selectOne(wrapper);
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public R addTag(String tag, String title, List<MultipartFile> files) {
@@ -147,6 +148,14 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         BusinessEnterprise existByUscc = this.getByUscc(form.getUscc());
         if (existByUscc != null) {
             return R.error("该统一社会信用代码已被注册");
+        }
+
+        // 检查企业名称是否已存在
+        QueryWrapper<BusinessEnterprise> wrapper = new QueryWrapper<>();
+        wrapper.eq("enterprise_name", form.getEnterpriseName());
+        BusinessEnterprise existByEnterpriseName = businessEnterpriseMapper.selectOne(wrapper);
+        if (existByEnterpriseName != null) {
+            return R.error("该企业名称已被注册");
         }
 
         // 创建企业申请实体
