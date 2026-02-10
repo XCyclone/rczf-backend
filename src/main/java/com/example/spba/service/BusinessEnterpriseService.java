@@ -7,6 +7,8 @@ import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.domain.entity.BusinessEnterpriseApply;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
 import com.example.spba.utils.R;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 public interface BusinessEnterpriseService {
@@ -16,6 +18,15 @@ public interface BusinessEnterpriseService {
      * @return 申请结果
      */
     R registerApply(BusinessEnterpriseDTO form);
+
+    /**
+     * 新增标签接口
+     * @param tag 申请标签
+     * @param title 标签名称
+     * @param files 图片文件列表
+     * @return 操作结果
+     */
+    public R addTag(String tag, String title, List<MultipartFile> files);
 
     /**
      * 审批企业注册申请

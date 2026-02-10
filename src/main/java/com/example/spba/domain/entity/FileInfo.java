@@ -76,10 +76,6 @@ public class FileInfo implements Serializable {
      */
     private String reserve2;
 
-    /**
-     * 文件大小
-     */
-    private Integer fileSize;
 
     /**
      * 保留字段3

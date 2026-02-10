@@ -7,7 +7,7 @@ server:
   # 开启优雅停机
   shutdown: graceful
   servlet:
-    context-path: /spba-api
+    context-path: /int-api
 
 spring:
   lifecycle:
@@ -103,6 +103,8 @@ spba:
   ip:
   domain-name:
   storage-url:
+  upload:
+    path: ${user.dir}/upload
   qiniu:
     bucket-name:
     access-key:

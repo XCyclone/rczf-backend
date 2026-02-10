@@ -27,28 +27,28 @@ public class Role implements Serializable {
      */
     private String name;
 
-    /**
-     * 权限集合
-     */
-    private String permission;
-
-    /**
-     * 超级管理员（0否 1是）
-     */
-    private Integer root;
-
-    /**
-     * 角色状态（0停用 1正常）
-     */
-    private Integer status;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
+//    /**
+//     * 权限集合
+//     */
+//    private String permission;
+//
+//    /**
+//     * 超级管理员（0否 1是）
+//     */
+//    private Integer root;
+//
+//    /**
+//     * 角色状态（0停用 1正常）
+//     */
+//    private Integer status;
+//
+//    /**
+//     * 更新时间
+//     */
+//    private Date updateTime;
+//
+//    /**
+//     * 创建时间
+//     */
+//    private Date createTime;
 }

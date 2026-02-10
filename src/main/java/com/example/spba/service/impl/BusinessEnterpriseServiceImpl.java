@@ -3,19 +3,14 @@ package com.example.spba.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.spba.constant.ProjectConstants;
-import com.example.spba.dao.BusinessEnterpriseApplyMapper;
-import com.example.spba.dao.BusinessEnterpriseMapper;
-import com.example.spba.dao.BusinessUserApplyMapper;
-import com.example.spba.dao.UserMapper;
+import com.example.spba.dao.*;
 import com.example.spba.domain.dto.BusinessEnterpriseDTO;
 import com.example.spba.domain.dto.BusinessEnterpriseUpdateDTO;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
-import com.example.spba.domain.entity.BusinessEnterprise;
-import com.example.spba.domain.entity.BusinessEnterpriseApply;
-import com.example.spba.domain.entity.BusinessUserApply;
-import com.example.spba.domain.entity.User;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.BusinessEnterpriseService;
 import com.example.spba.service.RoleUserRelService;
+import com.example.spba.utils.FileUploadUtil;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpriseMapper, BusinessEnterprise> implements BusinessEnterpriseService {
+public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService {
 
     @Autowired
     private BusinessEnterpriseMapper businessEnterpriseMapper;
@@ -49,6 +45,18 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
 
     @Autowired
     private RoleUserRelService roleUserRelService;
+    
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
+
+    @Autowired
+    private BusinessEnterpriseTagMapper businessEnterpriseTagMapper;
+
+    @Autowired
+    private FileInfoMapper fileInfoMapper;
+
+    @Autowired
+    private BusinessEnterpriseAddressMapper businessEnterpriseAddressMapper;
 
     /**
      * 根据统一社会信用代码查询企业
@@ -63,18 +71,83 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public R addTag(String tag, String title, List<MultipartFile> files) {
+        try {
+            // 验证必填参数
+            if (tag == null || tag.trim().isEmpty()) {
+                return R.error("申请标签不能为空");
+            }
+            if (title == null || title.trim().isEmpty()) {
+                return R.error("标签名称不能为空");
+            }
+            if (files == null || files.isEmpty()) {
+                return R.error("至少需要上传一个文件");
+            }
+
+            // 生成标签信息ID
+            String tagInfoId = UUID.randomUUID().toString().replace("-", "");
+
+            // 创建标签信息记录
+            BusinessEnterpriseTag tagInfo = new BusinessEnterpriseTag();
+            tagInfo.setId(tagInfoId);
+            tagInfo.setTag(tag);
+            tagInfo.setTitle(title);
+
+            // 保存标签信息记录
+            businessEnterpriseTagMapper.insert(tagInfo);
+
+            // 处理上传的文件
+            for (MultipartFile file : files) {
+
+                // 生成文件ID
+                String fileId = UUID.randomUUID().toString().replace("-", "");
+
+                try {
+                    // 使用文件上传工具处理文件上传
+                    FileUploadUtil.UploadedFileInfo uploadedFile = fileUploadUtil.uploadFile(file, "file_info");
+                    
+                    String fileName = uploadedFile.getOriginalName();
+                    String storedFileName = uploadedFile.getStoredName();
+                    String filePath = uploadedFile.getFilePath();
+                    String fileUrl = "/profile/upload/file_info/" + storedFileName;
+
+                    // 创建文件信息记录，relationId指向标签信息ID
+                    FileInfo fileInfo = new FileInfo();
+                    fileInfo.setId(fileId);
+                    fileInfo.setRelationId(tagInfoId); // 关联到标签信息ID
+                    fileInfo.setOriginalName(fileName);
+                    fileInfo.setStoredName(storedFileName);
+                    fileInfo.setFilePath(filePath);
+                    fileInfo.setFileUrl(fileUrl);
+                    fileInfo.setFileType(file.getContentType());
+                    fileInfo.setLastUpdateDate(Time.getNowTimeDate("yyyy-MM-dd"));
+                    fileInfo.setLastUpdateTime(Time.getNowTimeDate("HH:mm:ss"));
+                    fileInfo.setLastUpdater(""); // 可以根据实际需求设置操作人
+
+                    // 保存文件信息记录
+                    fileInfoMapper.insert(fileInfo);
+                } catch (Exception e) {
+                    return R.error("文件上传失败: " + e.getMessage());
+                }
+
+            }
+
+            return R.success("标签添加成功");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return R.error("标签添加失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public R registerApply(BusinessEnterpriseDTO form) {
         // 检查统一社会信用代码是否已存在
         BusinessEnterprise existByUscc = this.getByUscc(form.getUscc());
         if (existByUscc != null) {
             return R.error("该统一社会信用代码已被注册");
         }
-
-//        // 检查经办人手机号是否已存在
-//        BusinessEnterprise existByMobile = this.getByOperatorMobile(form.getOperatorMobile());
-//        if (existByMobile != null) {
-//            return R.error("该经办人手机号已被注册");
-//        }
 
         // 创建企业申请实体
         BusinessEnterpriseApply apply = new BusinessEnterpriseApply();
@@ -91,8 +164,6 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
         apply.setIndustry(form.getIndustry());
         apply.setStaffSize(form.getStaffSize());
         apply.setUscc(form.getUscc());
-        apply.setLegalPerson(form.getLegalPerson());
-        apply.setLegalIdNumber(form.getLegalIdNumber());
         apply.setEnterpriseAddr(form.getEnterpriseAddr());
         apply.setEnterpriseLocationId(form.getEnterpriseLocationId());
         apply.setEnterpriseLocationName(form.getEnterpriseLocationName());
@@ -107,14 +178,27 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
         apply.setRegTime(Time.getNowTimeDate("HH:mm:ss"));
         
         // 设置注册类型和其他状态
-        apply.setRegCategory(form.getRegCategory());
+        apply.setRegCategory(1);
         apply.setOperation(1); // 1-注册
         apply.setStatus(0); // 0-提交/待审核
         apply.setInfo(""); // 初始备注为空
         
         // 保存申请信息到business_enterprise_apply表
         businessEnterpriseApplyMapper.insert(apply);
-        
+        for(String address : form.getOfficeAddress()){
+            BusinessEnterpriseAddress officeAddress = new BusinessEnterpriseAddress();
+            officeAddress.setId(UUID.randomUUID().toString().replace("-", ""));
+            officeAddress.setEnterpriseId(enterpriseId);
+            officeAddress.setOfficeAddress(address);
+            businessEnterpriseAddressMapper.insert(officeAddress);
+        }
+        for (String tag : form.getTags()){
+            BusinessEnterpriseTag tagInfo = new BusinessEnterpriseTag();
+            tagInfo.setId(tag);
+            tagInfo.setEnterpriseId(enterpriseId);
+            businessEnterpriseTagMapper.updateById(tagInfo);
+        }
+
         return R.success("企业注册申请已提交，请等待审核", applyId);
     }
 
@@ -157,8 +241,6 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
         enterprise.setIndustry(apply.getIndustry());
         enterprise.setStaffSize(apply.getStaffSize());
         enterprise.setUscc(apply.getUscc());
-        enterprise.setLegalPerson(apply.getLegalPerson());
-        enterprise.setLegalIdNumber(apply.getLegalIdNumber());
         enterprise.setEnterpriseAddr(apply.getEnterpriseAddr());
         enterprise.setEnterpriseLocationId(apply.getEnterpriseLocationId());
         enterprise.setEnterpriseLocationName(apply.getEnterpriseLocationName());
@@ -274,6 +356,34 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
         // 添加审批状态标志（根据数量判断）
         result.put("updateFlag", pendingUpdateCount > 0 ? 1 : 0); // 0表示无待审批，1表示有待审批
         
+        // 查询企业标签信息
+        QueryWrapper<BusinessEnterpriseTag> tagWrapper = new QueryWrapper<>();
+        tagWrapper.eq("enterprise_id", enterpriseId);
+        List<BusinessEnterpriseTag> tags = businessEnterpriseTagMapper.selectList(tagWrapper);
+        
+        // 处理标签信息，只返回id、tag、title字段，不返回文件
+        List<Map<String, Object>> tagList = new ArrayList<>();
+        for (BusinessEnterpriseTag tagEntity : tags) {
+            java.util.Map<String, Object> tagInfo = new java.util.HashMap<>();
+            tagInfo.put("id", tagEntity.getId());
+            tagInfo.put("tag", tagEntity.getTag());
+            tagInfo.put("title", tagEntity.getTitle());
+            tagList.add(tagInfo);
+        }
+        result.put("tags", tagList);
+        
+        // 查询企业办公地址信息
+        QueryWrapper<BusinessEnterpriseAddress> addressWrapper = new QueryWrapper<>();
+        addressWrapper.eq("enterprise_id", enterpriseId);
+        List<BusinessEnterpriseAddress> addresses = businessEnterpriseAddressMapper.selectList(addressWrapper);
+        
+        // 处理办公地址信息
+        List<String> officeAddresses = new java.util.ArrayList<>();
+        for (BusinessEnterpriseAddress addressEntity : addresses) {
+            officeAddresses.add(addressEntity.getOfficeAddress());
+        }
+        result.put("officeAddresses", officeAddresses);
+        
         return result;
     }
     
@@ -388,18 +498,7 @@ public class BusinessEnterpriseServiceImpl extends ServiceImpl<BusinessEnterpris
         
         // 统一社会信用代码不允许修改
         apply.setUscc(enterprise.getUscc());
-        
-        if (form.getLegalPerson() != null) {
-            apply.setLegalPerson(form.getLegalPerson());
-        } else {
-            apply.setLegalPerson(enterprise.getLegalPerson());
-        }
-        
-        if (form.getLegalIdNumber() != null) {
-            apply.setLegalIdNumber(form.getLegalIdNumber());
-        } else {
-            apply.setLegalIdNumber(enterprise.getLegalIdNumber());
-        }
+
         
         if (form.getEnterpriseAddr() != null) {
             apply.setEnterpriseAddr(form.getEnterpriseAddr());

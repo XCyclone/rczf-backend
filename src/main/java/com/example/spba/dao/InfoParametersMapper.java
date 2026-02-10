@@ -5,10 +5,11 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface InfoParametersMapper {
     
-    @Select("SELECT par_key as parKey, par_value as parValue FROM public_parameters WHERE par_type = #{parType}")
-    List<InfoParameters> selectByType(String parType);
+    @Select("SELECT par_value FROM public_parameters WHERE par_type = #{parType} order by par_key")
+    List<String> selectByType(String parType);
 }

@@ -64,7 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateLogin(info.get("id").toString(), params.get("ip").toString());
 
         HashMap data = new HashMap<>();
-        data.put("avatar", info.get("avatar"));
+//        data.put("avatar", info.get("avatar"));
         data.put("username", info.get("username"));
         data.put("token", StpUtil.getTokenValue());
         result.put("data", data);

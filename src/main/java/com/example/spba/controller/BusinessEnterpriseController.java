@@ -1,5 +1,6 @@
 package com.example.spba.controller;
 
+import com.example.spba.controller.base.BaseController;
 import com.example.spba.domain.dto.*;
 import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.service.BusinessEnterpriseService;
@@ -11,12 +12,15 @@ import com.example.spba.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
+
 @RestController
 @RequestMapping("/business/enterprise")
-public class BusinessEnterpriseController {
+public class BusinessEnterpriseController extends BaseController {
 
     @Autowired
     private BusinessEnterpriseService businessEnterpriseService;
@@ -31,13 +35,28 @@ public class BusinessEnterpriseController {
      */
     @PostMapping("/register/apply")
     public R registerApply(@Validated(BusinessEnterpriseDTO.Save.class) @RequestBody BusinessEnterpriseDTO form) {
-        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
-        if (!isCaptchaValid) {
-            return R.error("验证码错误或已失效");
-        }
+//        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
+//        if (!isCaptchaValid) {
+//            return R.error("验证码错误或已失效");
+//        }
         
         // 这里已经在Service层做了验证，所以直接调用
         return businessEnterpriseService.registerApply(form);
+    }
+
+    /**
+     * 新增标签接口
+     * @param tag 申请标签
+     * @param title 标签名称
+     * @param files 图片文件列表
+     * @return 操作结果
+     */
+    @PostMapping(value = "/addTag", consumes = "multipart/form-data")
+    public R addTag(@RequestParam("tag") String tag,
+                    @RequestParam("title") String title,
+                    @RequestPart("files") List<MultipartFile> files) {
+
+        return businessEnterpriseService.addTag(tag, title, files);
     }
 
     /**
@@ -65,13 +84,16 @@ public class BusinessEnterpriseController {
 
     /**
      * 获取企业信息
-     * @param request 包含企业ID的请求对象
      * @return 企业信息
      */
     @PostMapping("/getEnterpriseInfo")
-    public R getEnterpriseInfo(@RequestBody EnterpriseInfoRequestDTO request) {
+    public R getEnterpriseInfo(@RequestAttribute(CURRENT_USER_ID) String userId) {
         try {
-            String enterpriseId = request.getEnterprise_id();
+            String enterpriseId = userId; // 获取当前用户ID
+            if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
+                return R.error("用户未登录或用户ID为空");
+            }
+            
             Object enterpriseInfoWithStatus = businessEnterpriseService.getEnterpriseInfoWithApprovalStatus(enterpriseId);
             if (enterpriseInfoWithStatus != null) {
                 return R.success(enterpriseInfoWithStatus);
@@ -91,14 +113,11 @@ public class BusinessEnterpriseController {
     @PostMapping("/updatePassword")
     public R updatePassword(@RequestBody UpdateEnterprisePasswordRequestDTO request) {
         try {
-            String enterpriseId = request.getEnterprise_id();
+            String enterpriseId = getCurrentUserId(); // 获取当前用户ID
             String oldPassword = request.getOld_password();
             String newPassword = request.getNew_password();
             
             // 参数校验
-            if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
-                return R.error("企业ID不能为空");
-            }
             if (oldPassword == null || oldPassword.trim().isEmpty()) {
                 return R.error("原密码不能为空");
             }

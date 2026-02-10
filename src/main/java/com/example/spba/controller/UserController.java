@@ -240,23 +240,23 @@ public class UserController
         }
         JSONObject data = (JSONObject) JSONObject.toJSON(res.get("data"));
 
-        List<String> perms = new ArrayList<>();
-        List<HashMap> menus = userService.getPermissionList(StpUtil.getLoginIdAsString());
-        Iterator<HashMap> iterator = menus.iterator();
-        while (iterator.hasNext()) {
-            HashMap menu = iterator.next();
-            if (menu.get("perms") != null && menu.get("perms").toString().length() > 0 && menu.get("type").equals("F")) {
-                perms.add(menu.get("perms").toString());
-                iterator.remove();
-            }
-            menu.remove("sort");
-            menu.remove("status");
-            menu.remove("perms");
-            menu.remove("type");
-        }
-        List<Object> tree = Function.getTree(menus, 0);
-        data.put("menu", tree);
-        data.put("perms", perms);
+//        List<String> perms = new ArrayList<>();
+//        List<HashMap> menus = userService.getPermissionList(StpUtil.getLoginIdAsString());
+//        Iterator<HashMap> iterator = menus.iterator();
+//        while (iterator.hasNext()) {
+//            HashMap menu = iterator.next();
+//            if (menu.get("perms") != null && menu.get("perms").toString().length() > 0 && menu.get("type").equals("F")) {
+//                perms.add(menu.get("perms").toString());
+//                iterator.remove();
+//            }
+//            menu.remove("sort");
+//            menu.remove("status");
+//            menu.remove("perms");
+//            menu.remove("type");
+//        }
+//        List<Object> tree = Function.getTree(menus, 0);
+//        data.put("menu", tree);
+//        data.put("perms", perms);
 
         return R.success(data);
     }

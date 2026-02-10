@@ -11,6 +11,7 @@ import com.example.spba.domain.entity.ApplicationTagInfo;
 import com.example.spba.domain.entity.FileInfo;
 import com.example.spba.domain.entity.ViewApplicationIndustry;
 import com.example.spba.service.EnterpriseApplyService;
+import com.example.spba.utils.FileUploadUtil;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,9 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     
     @Autowired
     private ViewApplicationIndustryMapper viewApplicationIndustryMapper;
+    
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
 
     @Override
     public R addTag(String tag, String title, List<MultipartFile> files) {
@@ -69,50 +73,34 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
                 // 生成文件ID
                 String fileId = UUID.randomUUID().toString().replace("-", "");
 
-                // 上传文件并获取文件路径
-                String fileName = file.getOriginalFilename();
-                String fileExtension = "";
-                if (fileName != null && fileName.contains(".")) {
-                    fileExtension = fileName.substring(fileName.lastIndexOf("."));
-                }
-                String storedFileName = fileId + fileExtension;
-
-                // 直接处理文件上传
-                String uploadDir = "file_info";
-                String filePath = uploadDir + "/" + storedFileName;
-
                 try {
-                    // 创建上传目录
-                    java.io.File uploadDirectory = new java.io.File(uploadDir);
-                    if (!uploadDirectory.exists()) {
-                        uploadDirectory.mkdirs();
-                    }
+                    // 使用文件上传工具处理文件上传
+                    FileUploadUtil.UploadedFileInfo uploadedFile = fileUploadUtil.uploadFile(file, "file_info");
+                    
+                    String fileName = uploadedFile.getOriginalName();
+                    String storedFileName = uploadedFile.getStoredName();
+                    String filePath = uploadedFile.getFilePath();
+                    String fileUrl = "/profile/upload/file_info/" + storedFileName;
+                    // 创建文件信息记录，relationId指向标签信息ID
+                    FileInfo fileInfo = new FileInfo();
+                    fileInfo.setId(fileId);
+                    fileInfo.setRelationId(tagInfoId); // 关联到标签信息ID
+                    fileInfo.setOriginalName(fileName);
+                    fileInfo.setStoredName(storedFileName);
+                    fileInfo.setFilePath(filePath);
+                    fileInfo.setFileUrl(fileUrl);
+                    fileInfo.setFileType(file.getContentType());
+                    fileInfo.setLastUpdateDate(Time.getNowTimeDate("yyyy-MM-dd"));
+                    fileInfo.setLastUpdateTime(Time.getNowTimeDate("HH:mm:ss"));
+                    fileInfo.setLastUpdater(""); // 可以根据实际需求设置操作人
 
-                    // 保存文件
-                    java.io.File destFile = new java.io.File(uploadDir, storedFileName);
-                    file.transferTo(destFile);
+                    // 保存文件信息记录
+                    fileInfoMapper.insert(fileInfo);
                 } catch (Exception e) {
                     return R.error("文件上传失败: " + e.getMessage());
                 }
 
-                String fileUrl = "/profile/upload/file_info/" + storedFileName;
 
-                // 创建文件信息记录，relationId指向标签信息ID
-                FileInfo fileInfo = new FileInfo();
-                fileInfo.setId(fileId);
-                fileInfo.setRelationId(tagInfoId); // 关联到标签信息ID
-                fileInfo.setOriginalName(fileName);
-                fileInfo.setStoredName(storedFileName);
-                fileInfo.setFilePath(filePath);
-                fileInfo.setFileUrl(fileUrl);
-                fileInfo.setFileType(file.getContentType());
-                fileInfo.setLastUpdateDate(Time.getNowTimeDate("yyyy-MM-dd"));
-                fileInfo.setLastUpdateTime(Time.getNowTimeDate("HH:mm:ss"));
-                fileInfo.setLastUpdater(""); // 可以根据实际需求设置操作人
-                fileInfo.setFileSize((int) file.getSize());
-
-                // 保存文件信息记录
-                fileInfoMapper.insert(fileInfo);
             }
 
             return R.success("标签添加成功");

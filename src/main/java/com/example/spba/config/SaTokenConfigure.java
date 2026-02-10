@@ -22,9 +22,13 @@ public class SaTokenConfigure implements WebMvcConfigurer
         // 注册路由拦截器，自定义认证规则
         registry.addInterceptor(new SaRouteInterceptor((req, res, handler) ->
         {
-            // 登录认证 -- 拦截所有路由，并排除/login 用于开放登录
-            // 已关闭登录拦截
-             SaRouter.match("/**", "/login", r -> StpUtil.checkLogin());
+            // 检查token是否过期
+            if (StpUtil.isLogin()) {
+                long tokenTimeout = StpUtil.getTokenTimeout();
+                if (tokenTimeout <= 0) {
+                    throw new RuntimeException("Token已过期，请重新登录");
+                }
+            }
 
             // 权限认证：匹配restful风格路由、多个条件一起使用
             SaRouter.match(SaHttpMethod.GET).match("/users").check(r ->StpUtil.checkPermission("user:list"));
@@ -44,6 +48,9 @@ public class SaTokenConfigure implements WebMvcConfigurer
             SaRouter.match(SaHttpMethod.PUT).match("/menu").check(r ->StpUtil.checkPermission("menu:edit"));
             SaRouter.match(SaHttpMethod.GET).match("/menu/{id}").check(r ->StpUtil.checkPermission("menu:query"));
             SaRouter.match(SaHttpMethod.DELETE).match("/menu/{id}").check(r ->StpUtil.checkPermission("menu:del"));
-        })).addPathPatterns("/**");
+        }))
+        .addPathPatterns("/**")
+        .excludePathPatterns("/public/**")  // 排除公共接口
+        .excludePathPatterns("/login");     // 排除登录接口
     }
 }

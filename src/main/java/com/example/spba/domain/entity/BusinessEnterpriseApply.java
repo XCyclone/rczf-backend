@@ -33,12 +33,6 @@ public class BusinessEnterpriseApply implements Serializable {
     /** 统一社会信用代码 */
     private String uscc;
 
-    /** 法人 */
-    private String legalPerson;
-
-    /** 法人身份证号码 */
-    private String legalIdNumber;
-
     /** 企业地址 */
     private String enterpriseAddr;
 
