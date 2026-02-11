@@ -233,10 +233,11 @@ public class UserController
                    @Validated @RequestBody LoginDTO loginDTO)
     {
         // 验证验证码
-        boolean isCaptchaValid = captchaService.validateCaptcha(loginDTO.getCaptchaId(), loginDTO.getCaptchaCode());
-        if (!isCaptchaValid) {
-            return R.error("验证码错误或已失效");
-        }
+        // todo:暂时注释
+//        boolean isCaptchaValid = captchaService.validateCaptcha(loginDTO.getCaptchaId(), loginDTO.getCaptchaCode());
+//        if (!isCaptchaValid) {
+//            return R.error("验证码错误或已失效");
+//        }
         HashMap where = new HashMap<>();
         where.put("username", loginDTO.getUsername());
         where.put("password", loginDTO.getPassword());

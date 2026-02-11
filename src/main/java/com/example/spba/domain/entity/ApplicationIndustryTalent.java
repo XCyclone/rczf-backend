@@ -22,11 +22,14 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 申请对应的项目名称 */
     private String projectName;
 
-    /** 申请意向小区ID */
-    private String communityId;
+    /** 申请意向小区1 */
+    private String communityId1;
 
-    /** 申请意向小区名称 */
-    private String communityName;
+    /** 申请意向小区2 */
+    private String communityId2;
+
+    /** 申请意向小区3 */
+    private String communityId3;
 
     /** 申请意向小区房源套数 */
     private Integer houseCount;
@@ -40,11 +43,11 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 申请时间 */
     private String applyTime;
 
-    /** 申请企业ID */
-    private String enterpriseId;
+    /** 申请企业统一信用代码 */
+    private String enterpriseUscc;
 
-    /** 申请企业名称 */
-    private String enterpriseName;
+    /** 申请企业id */
+    private String enterpriseId;
 
     /** 经办人ID */
     private String operatorId;
@@ -55,7 +58,7 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 申请附件ID */
     private String attachmentId;
 
-    /** 申请状态：0-撤回/待提交；1-提交/待审核；2-属地审核中；3-属地审核通过/待确定配额；4-属地审核拒绝；5-已确定配额/待资格公示；6-资格公示中 */
+    /** 申请状态：0-撤回/待提交；1-提交/待审核；2-属地审核通过；3-属地审核拒绝；4-产促审核通过；5-产促审核拒绝； */
     private Integer applyStatus;
 
     /** 申请排序 */
@@ -76,17 +79,17 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 产促审核意见 */
     private String proPromoAuditRemark;
 
-    /** 住建委审核日期 */
-    private String housingAuditDate;
+    /** 企业属地审核日期 */
+    private String enterpriseLocationAuditDate;
 
-    /** 住建委审核日期 */
-    private String housingAuditTime;
+    /** 企业属地审核日期 */
+    private String enterpriseLocationAuditTime;
 
-    /** 住建委审核人 */
-    private String housingAuditor;
+    /** 企业属地审核人 */
+    private String enterpriseLocationAuditor;
 
-    /** 住建委审核意见 */
-    private String housingAuditRemark;
+    /** 企业属地审核意见 */
+    private String enterpriseLocationAuditRemark;
 
     /** 保留字段1 */
     private String reserve1;

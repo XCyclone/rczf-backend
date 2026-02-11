@@ -454,16 +454,16 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public R updateApply(BusinessEnterpriseUpdateDTO form) {
+    public R updateApply(BusinessEnterpriseUpdateDTO form, String userId) {
         // 验证企业是否存在
-        BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(form.getEnterpriseId());
+        BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(userId);
         if (enterprise == null) {
             return R.error("企业不存在");
         }
         
         // 检查是否有待审批的修改申请
         QueryWrapper<BusinessEnterpriseApply> pendingWrapper = new QueryWrapper<>();
-        pendingWrapper.eq("business_enterprise_id", form.getEnterpriseId())
+        pendingWrapper.eq("business_enterprise_id", userId)
                      .eq("status", 0)  // 0-提交/待审核
                      .eq("operation", 2); // 2-修改信息
         
@@ -478,7 +478,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 生成申请ID
         String applyId = UUID.randomUUID().toString().replace("-", "");
         apply.setId(applyId);
-        apply.setBusinessEnterpriseId(form.getEnterpriseId());
+        apply.setBusinessEnterpriseId(userId);
         
         // 复制要修改的信息
         if (form.getEnterpriseName() != null) {

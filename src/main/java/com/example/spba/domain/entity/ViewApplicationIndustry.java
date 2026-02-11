@@ -22,8 +22,14 @@ public class ViewApplicationIndustry implements Serializable {
     /** 申请对应的项目名称 */
     private String projectName;
 
-    /** 申请意向小区ID */
-    private String communityId;
+    /** 申请意向小区1 */
+    private String communityId1;
+
+    /** 申请意向小区2 */
+    private String communityId2;
+
+    /** 申请意向小区3 */
+    private String communityId3;
 
     /** 申请意向小区房源套数 */
     private Integer houseCount;
@@ -37,7 +43,10 @@ public class ViewApplicationIndustry implements Serializable {
     /** 申请时间 */
     private String applyTime;
 
-    /** 申请企业ID */
+    /** 申请企业统一信用代码 */
+    private String enterpriseUscc;
+
+    /** 申请企业id */
     private String enterpriseId;
 
     /** 经办人ID */
@@ -59,28 +68,28 @@ public class ViewApplicationIndustry implements Serializable {
     private Integer currentSort;
 
     /** 企业属地审核日期 */
-    private String companyAuditDate;
+    private String enterpriseLocationAuditDate;
 
     /** 企业属地审核时间 */
-    private String companyAuditTime;
+    private String enterpriseLocationAuditTime;
 
     /** 企业属地审核人 */
-    private String companyAuditor;
+    private String enterpriseLocationAuditor;
 
     /** 企业属地审核意见 */
-    private String companyAuditRemark;
+    private String enterpriseLocationAuditRemark;
 
     /** 产促审核日期 */
-    private String chargeUnitAuditDate;
+    private String proPromoAuditDate;
 
     /** 产促审核时间 */
-    private String chargeUnitAuditTime;
+    private String proPromoAuditTime;
 
     /** 产促审核人 */
-    private String chargeUnitAuditor;
+    private String proPromoAuditor;
 
     /** 产促审核意见 */
-    private String chargeUnitAuditRemark;
+    private String proPromoAuditRemark;
 
     /** 企业名称 */
     private String enterpriseName;

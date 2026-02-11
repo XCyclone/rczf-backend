@@ -2,7 +2,6 @@ package com.example.spba.controller;
 
 import com.example.spba.controller.base.BaseController;
 import com.example.spba.domain.dto.*;
-import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.service.BusinessEnterpriseService;
 import com.example.spba.service.CaptchaService;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
@@ -14,13 +13,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
-
 import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 
 @RestController
 @RequestMapping("/business/enterprise")
-public class BusinessEnterpriseController extends BaseController {
+public class EnterpriseRegisterController extends BaseController {
 
     @Autowired
     private BusinessEnterpriseService businessEnterpriseService;
@@ -111,9 +108,9 @@ public class BusinessEnterpriseController extends BaseController {
      * @return
      */
     @PostMapping("/updatePassword")
-    public R updatePassword(@RequestBody UpdateEnterprisePasswordRequestDTO request) {
+    public R updatePassword(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestBody UpdateEnterprisePasswordRequestDTO request) {
         try {
-            String enterpriseId = getCurrentUserId(); // 获取当前用户ID
+            String enterpriseId = userId; // 获取当前用户ID
             String oldPassword = request.getOld_password();
             String newPassword = request.getNew_password();
             
@@ -137,29 +134,9 @@ public class BusinessEnterpriseController extends BaseController {
      * @return 申请结果
      */
     @PostMapping("/update/apply")
-    public R updateApply(@Validated(BusinessEnterpriseUpdateDTO.Save.class) @RequestBody BusinessEnterpriseUpdateDTO form) {
-        return businessEnterpriseService.updateApply(form);
+    public R updateApply(@RequestAttribute(CURRENT_USER_ID) String userId, @Validated(BusinessEnterpriseUpdateDTO.Save.class) @RequestBody BusinessEnterpriseUpdateDTO form) {
+        return businessEnterpriseService.updateApply(form, userId);
     }
     
-    /**
-     * 获取企业下的用户信息
-     * @param request 包含企业ID的请求对象
-     * @return 该企业下的用户信息列表
-     */
-    @PostMapping("/getUserInfo")
-    public R getEnterpriseUsers(@RequestBody EnterpriseUsersRequestDTO request) {
-        try {
-            String enterpriseId = request.getEnterprise_id();
-            if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
-                return R.error("企业ID不能为空");
-            }
-            
-            List<EnterpriseUserResponseDTO> users = businessEnterpriseService.getEnterpriseUsers(enterpriseId);
-            return R.success(users);
-        } catch (IllegalArgumentException e) {
-            return R.error(e.getMessage());
-        } catch (Exception e) {
-            return R.error("查询用户信息失败：" + e.getMessage());
-        }
-    }
+
 }

@@ -13,6 +13,7 @@ import com.example.spba.domain.dto.ProjectInfoDTO;
 import com.example.spba.service.CaptchaService;
 import com.example.spba.service.PublicService;
 import com.example.spba.utils.R;
+import com.example.spba.utils.Time;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -123,24 +124,20 @@ public class PublicController {
 
     /**
      * 查询项目信息
-     * @param applyStartTime 申请开始时间
-     * @param applyEndTime 申请截止时间
      * @return 项目信息列表，包含id和project_name
      */
     @PostMapping("/query/project")
-    public R queryProject(@RequestParam(required = false) String applyStartTime,
-                         @RequestParam(required = false) String applyEndTime) {
+    public R queryProject() {
         try {
             QueryWrapper<ProjectInfo> queryWrapper = new QueryWrapper<>();
-            
-            // 根据时间范围筛选
-            if (applyStartTime != null && !applyStartTime.isEmpty()) {
-                queryWrapper.ge("apply_start_time", applyStartTime);
-            }
-            if (applyEndTime != null && !applyEndTime.isEmpty()) {
-                queryWrapper.le("apply_end_time", applyEndTime);
-            }
-            
+
+            //获取当前时间 格式yyyyMMdd hh:mm:ss
+            String currentDate = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+
+
+            queryWrapper.lt("apply_start_time", currentDate);
+            queryWrapper.gt("apply_end_time", currentDate);
+
             // 只查询开启状态的项目
             queryWrapper.eq("status", 1);
             

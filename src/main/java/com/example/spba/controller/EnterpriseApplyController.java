@@ -1,7 +1,9 @@
 package com.example.spba.controller;
 
 import com.example.spba.controller.base.BaseController;
+import com.example.spba.dao.ProjectCommunityMapper;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
+import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.service.EnterpriseApplyService;
 import com.example.spba.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
+import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USERNAME;
+import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
+
 @RestController
 @RequestMapping("/enterprise/apply")
 @Validated
@@ -21,6 +26,9 @@ public class EnterpriseApplyController extends BaseController {
 
     @Resource
     private EnterpriseApplyService enterpriseApplyService;
+    
+    @Autowired
+    private ProjectCommunityMapper projectCommunityMapper;
 
 //    /**
 //     * 新增标签接口
@@ -46,13 +54,12 @@ public class EnterpriseApplyController extends BaseController {
      * @return 操作结果
      */
     @PostMapping("/submit")
-    public R submitApplication(@Valid @RequestBody EnterpriseSubmitDTO submitDTO) {
-        // 获取当前用户ID，可以在服务层使用
-        String currentUserId = getCurrentUserId();
-        System.out.println("提交申请的用户ID: " + currentUserId);
-        
-        return enterpriseApplyService.submitApplication(submitDTO);
+    public R submitApplication(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestAttribute(CURRENT_USERNAME) String userName, @Valid @RequestBody EnterpriseSubmitDTO submitDTO) {
+
+        return enterpriseApplyService.submitApplication(submitDTO, userId, userName);
     }
+
+
     
     /**
      * 查询企业申请视图信息
@@ -73,10 +80,55 @@ public class EnterpriseApplyController extends BaseController {
      * @return 操作结果
      */
     @PostMapping("/withdraw")
-    public R withdrawApplication(@RequestBody Map<String,String> param) {
+    public R withdrawApplication(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestBody Map<String,String> param) {
         // 获取当前用户ID，用于权限验证
         String applicationId = param.get("applicationId");
-        return enterpriseApplyService.withdrawApplication(applicationId);
+        return enterpriseApplyService.withdrawApplication(applicationId, userId);
     }
-
+    
+    /**
+     * 查询项目下的小区信息
+     * @param param 包含项目ID的参数
+     * @return 该项目关联的小区ID列表
+     */
+    @PostMapping("/query/community")
+    public R queryCommunitiesByProject(@RequestBody Map<String, String> param) {
+        try {
+            String projectId = param.get("projectId");
+            
+            // 参数校验
+            if (projectId == null || projectId.trim().isEmpty()) {
+                return R.error("项目ID不能为空");
+            }
+            
+            // 查询该项目关联的小区列表
+            List<String> communityIds = projectCommunityMapper.selectCommunityIdsByProjectId(projectId);
+            
+            return R.success(communityIds);
+        } catch (Exception e) {
+            return R.error("查询小区信息失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 企业申请修改接口
+     * 只有撤回状态(apply_status=0)的申请才能修改
+     * @param submitDTO 包含申请ID和修改信息的参数
+     * @return 操作结果
+     */
+    @PostMapping("/update/submit")
+    public R updateApplication(@RequestAttribute(CURRENT_USER_ID) String userId, 
+                              @RequestAttribute(CURRENT_USERNAME) String userName,
+             @Valid @RequestBody EnterpriseUpdateDTO submitDTO) {
+        try {
+            // 获取申请ID
+            String applicationId = submitDTO.getApplicationId();
+            if (applicationId == null || applicationId.trim().isEmpty()) {
+                return R.error("申请ID不能为空");
+            }
+            return enterpriseApplyService.updateApplication(submitDTO, userId, userName);
+        } catch (Exception e) {
+            return R.error("申请修改失败: " + e.getMessage());
+        }
+    }
 }

@@ -1,27 +1,19 @@
 package com.example.spba.controller;
 
-import com.example.spba.constant.ProjectConstants;
 import com.example.spba.domain.dto.*;
 import com.example.spba.domain.entity.BusinessUser;
 import com.example.spba.service.BusinessUserService;
 import com.example.spba.service.CaptchaService;
-import com.example.spba.service.UserOperationService;
 import com.example.spba.utils.R;
-import com.example.spba.utils.Time;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.DigestUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.UUID;
 
 import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 
 @RestController
 @RequestMapping("/business/user")
-public class BusinessUserController
+public class UserRegisterController
 {
     @Autowired
     private BusinessUserService businessUserService;
@@ -52,29 +44,7 @@ public class BusinessUserController
         return businessUserService.register( form);
     }
 
-    /**
-     * 审批业务用户（通过/拒绝）
-     * @param form
-     * @return
-     */
-    @PostMapping("/register/approve")
-    public R approve(@RequestAttribute(CURRENT_USER_ID) String userId, @Validated @RequestBody BusinessUserApproveDTO form)
-    {
-        try {
-            businessUserService.approve(
-                form.getBusinessUserId(), // 这里现在是applyId
-                form.isApproved(),
-                form.getInfo(), userId
-            );
-            
-            String message = form.isApproved() ? "审批成功" : "已拒绝该注册申请";
-            return R.success(message);
-        } catch (IllegalArgumentException e) {
-            return R.error(e.getMessage());
-        } catch (Exception e) {
-            return R.error("审批失败：" + e.getMessage());
-        }
-    }
+
 
     /**
      * 申请更新用户信息
@@ -93,29 +63,7 @@ public class BusinessUserController
         }
     }
 
-    /**
-     * 审批用户信息更新申请（通过/拒绝）
-     * @param form
-     * @return
-     */
-    @PostMapping("/update/approve")
-    public R updateApprove(@Validated @RequestBody BusinessUserUpdateApproveDTO form)
-    {
-        try {
-            businessUserService.approveUpdate(
-                form.getBusinessUserId(),
-                form.isApproved(),
-                form.getInfo()
-            );
-            
-            String message = form.isApproved() ? "信息更新审批成功" : "已拒绝信息更新申请";
-            return R.success(message);
-        } catch (IllegalArgumentException e) {
-            return R.error(e.getMessage());
-        } catch (Exception e) {
-            return R.error("审批失败：" + e.getMessage());
-        }
-    }
+
 
     /**
      * 获取用户信息

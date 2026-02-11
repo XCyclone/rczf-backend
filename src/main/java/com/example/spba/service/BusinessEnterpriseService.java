@@ -64,7 +64,7 @@ public interface BusinessEnterpriseService {
      * @param form 企业信息修改表单
      * @return 申请结果
      */
-    R updateApply(BusinessEnterpriseUpdateDTO form);
+    R updateApply(BusinessEnterpriseUpdateDTO form, String userId);
     
     /**
      * 根据企业ID查询该企业下的所有用户信息

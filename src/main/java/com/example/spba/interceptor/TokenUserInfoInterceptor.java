@@ -1,13 +1,16 @@
 package com.example.spba.interceptor;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.alibaba.fastjson.JSON;
 import com.example.spba.domain.entity.UserInfo;
 import com.example.spba.service.UserTokenService;
 import com.example.spba.utils.RequestAttributeUtil;
+import com.example.spba.utils.R;
 import com.example.spba.utils.UserContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -35,14 +38,14 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
                 // 验证token是否有效
                 if (!userTokenService.isValidToken(token)) {
                     logger.warn("无效的token: {}", token);
-                    throw new RuntimeException("Token无效或已过期");
+                    return handleTokenError(response, "Token无效或已过期");
                 }
 
                 // 检查token是否即将过期
                 long expireTime = userTokenService.getTokenExpireTime(token);
                 if (expireTime <= 0) {
                     logger.warn("token已过期: {}", token);
-                    throw new RuntimeException("Token已过期");
+                    return handleTokenError(response, "Token已过期");
                 }
 
                 // 获取用户完整信息
@@ -59,20 +62,15 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
                 String requestURI = request.getRequestURI();
                 if (!isPublicEndpoint(requestURI)) {
                     logger.warn("缺少访问凭证 - 请求路径: {}", requestURI);
-                    throw new RuntimeException("请提供有效的访问凭证");
+                    return handleTokenError(response, "请提供有效的访问凭证");
                 }
             }
 
             return true;
-        } catch (RuntimeException e) {
-            logger.error("获取用户信息失败: {}", e.getMessage(), e);
-            // 清理上下文避免污染
-            UserContextUtil.clear();
-            throw e;
         } catch (Exception e) {
             logger.error("拦截器处理异常: {}", e.getMessage(), e);
             UserContextUtil.clear();
-            throw new RuntimeException("系统内部错误");
+            return handleTokenError(response, "系统内部错误");
         }
     }
 
@@ -96,15 +94,20 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         }
 
         // 方式2: 从自定义请求头获取
-        String tokenHeader = request.getHeader("X-Auth-Token");
-        if (StringUtils.hasText(tokenHeader)) {
-            return tokenHeader;
+        String xTokenHeader = request.getHeader("X-Auth-Token");
+        if (StringUtils.hasText(xTokenHeader)) {
+            return xTokenHeader;
         }
 
         // 方式3: 从Sa-Token默认header获取
         String saTokenHeader = request.getHeader("Sa-Token");
         if (StringUtils.hasText(saTokenHeader)) {
             return saTokenHeader;
+        }
+        // 方式3: 从Sa-Token默认header获取
+        String tokenHeader = request.getHeader("token");
+        if (StringUtils.hasText(tokenHeader)) {
+            return tokenHeader;
         }
 
         // 方式4: 从请求参数获取
@@ -157,6 +160,32 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        return false;
+    }
+    
+    /**
+     * 处理token错误，直接向客户端返回JSON格式的错误响应
+     * @param response HttpServletResponse响应对象
+     * @param errorMessage 错误信息
+     * @return false 表示拦截请求
+     */
+    private boolean handleTokenError(HttpServletResponse response, String errorMessage) throws Exception {
+        // 清理上下文避免污染
+        UserContextUtil.clear();
+        RequestAttributeUtil.clear();
+        
+        // 设置响应头
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        
+        // 构造错误响应
+        R errorResponse = R.error(501, errorMessage);
+        String jsonResponse = JSON.toJSONString(errorResponse);
+        
+        // 写入响应
+        response.getWriter().write(jsonResponse);
+        response.getWriter().flush();
+        
         return false;
     }
 }

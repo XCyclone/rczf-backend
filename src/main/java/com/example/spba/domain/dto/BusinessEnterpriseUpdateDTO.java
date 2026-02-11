@@ -12,10 +12,6 @@ public class BusinessEnterpriseUpdateDTO {
     /** 保存时的校验分组 */
     public interface Save{}
 
-    /** 企业ID */
-    @NotBlank(message = "企业ID不能为空", groups = Save.class)
-    private String enterpriseId;
-
     /** 企业名称 */
     @Size(max = 128, message = "企业名称长度不能超过128个字符", groups = Save.class)
     private String enterpriseName;
