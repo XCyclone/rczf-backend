@@ -132,18 +132,6 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             // 保存申请记录
             applicationIndustryTalentMapper.insert(application);
             
-            // 更新标签信息中的application_id
-            if (submitDTO.getTagIds() != null && !submitDTO.getTagIds().isEmpty()) {
-                QueryWrapper<ApplicationTagInfo> queryWrapper = new QueryWrapper<>();
-                queryWrapper.in("id", submitDTO.getTagIds());
-                List<ApplicationTagInfo> tagInfos = applicationTagInfoMapper.selectList(queryWrapper);
-                
-                for (ApplicationTagInfo tagInfo : tagInfos) {
-                    tagInfo.setApplicationId(applicationId);
-                    applicationTagInfoMapper.updateById(tagInfo);
-                }
-            }
-            
             return R.success("企业申请提交成功", applicationId);
             
         } catch (Exception e) {

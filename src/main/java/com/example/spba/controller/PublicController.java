@@ -65,31 +65,33 @@ public class PublicController {
     @PostMapping("/query/enterprise")
     public R queryEnterprise() {
         try {
-            List<BusinessEnterprise> enterpriseList = businessEnterpriseMapper.selectList(null);
+            QueryWrapper queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("reg_category", 1);
+            List<BusinessEnterprise> enterpriseList = businessEnterpriseMapper.selectList(queryWrapper);
             Map<String, String> enterpriseMap = new HashMap<>();
             for (BusinessEnterprise enterprise : enterpriseList) {
                 enterpriseMap.put(enterprise.getId(), enterprise.getEnterpriseName());
             }
-            return R.success(enterpriseMap);
+            return R.success(publicService.convertKeyValueToValueText(enterpriseMap));
         } catch (Exception e) {
             return R.error("查询企业信息失败：" + e.getMessage());
         }
     }
     
-//    /**
-//     * 获取验证码
-//     * @return 包含验证码ID和图片数据的Map
-//     */
-//    @PostMapping("/captcha")
-//    public R getCaptcha() {
-//        try {
-//            // 生成5分钟过期的验证码
-//            Map<String, Object> captchaResult = captchaService.generateCaptcha(5);
-//            return R.success(captchaResult);
-//        } catch (Exception e) {
-//            return R.error("获取验证码失败：" + e.getMessage());
-//        }
-//    }
+    /**
+     * 获取验证码
+     * @return 包含验证码ID和图片数据的Map
+     */
+    @PostMapping("/captcha")
+    public R getCaptcha() {
+        try {
+            // 生成5分钟过期的验证码
+            Map<String, Object> captchaResult = captchaService.generateCaptcha(5);
+            return R.success(captchaResult);
+        } catch (Exception e) {
+            return R.error("获取验证码失败：" + e.getMessage());
+        }
+    }
 //
 //    /**
 //     * 验证验证码

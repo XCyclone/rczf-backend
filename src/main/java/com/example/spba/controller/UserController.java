@@ -4,8 +4,10 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.extra.servlet.ServletUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.spba.domain.dto.LoginDTO;
 import com.example.spba.domain.entity.User;
 import com.example.spba.domain.dto.UserDTO;
+import com.example.spba.service.CaptchaService;
 import com.example.spba.service.UserService;
 import com.example.spba.service.RoleService;
 import com.example.spba.service.RoleUserRelService;
@@ -42,6 +44,9 @@ public class UserController
 
     @Autowired
     private RoleUserRelService roleUserRelService;
+
+    @Autowired
+    private CaptchaService captchaService;
 
     /**
      * 获取用户列表
@@ -220,18 +225,21 @@ public class UserController
     /**
      * 密码登录
      * @param request
-     * @param username
-     * @param password
+     * @param loginDTO
      * @return
      */
     @PostMapping("/login")
     public R login(HttpServletRequest request,
-                   @NotBlank(message = "请输入账号") String username,
-                   @NotBlank(message = "请输入密码") String password)
+                   @Validated @RequestBody LoginDTO loginDTO)
     {
+        // 验证验证码
+        boolean isCaptchaValid = captchaService.validateCaptcha(loginDTO.getCaptchaId(), loginDTO.getCaptchaCode());
+        if (!isCaptchaValid) {
+            return R.error("验证码错误或已失效");
+        }
         HashMap where = new HashMap<>();
-        where.put("username", username);
-        where.put("password", password);
+        where.put("username", loginDTO.getUsername());
+        where.put("password", loginDTO.getPassword());
         where.put("ip", ServletUtil.getClientIP(request));
 
         HashMap res = userService.checkLogin(where);

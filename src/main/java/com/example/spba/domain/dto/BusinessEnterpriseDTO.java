@@ -65,11 +65,11 @@ public class BusinessEnterpriseDTO {
 
     private List<String> tags;
 
-//    /** 验证码ID */
-//    @NotBlank(message = "验证码ID不能为空", groups = Save.class)
-//    private String captchaId;
-//
-//    /** 用户输入的验证码 */
-//    @NotBlank(message = "验证码不能为空", groups = Save.class)
-//    private String captchaCode;
+    /** 验证码ID */
+    @NotBlank(message = "验证码ID不能为空", groups = Save.class)
+    private String captchaId;
+
+    /** 用户输入的验证码 */
+    @NotBlank(message = "验证码不能为空", groups = Save.class)
+    private String captchaCode;
 }

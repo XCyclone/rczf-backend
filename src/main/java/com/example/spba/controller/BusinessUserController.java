@@ -37,11 +37,11 @@ public class BusinessUserController
     @PostMapping("/register/apply")
     public R register(@Validated(BusinessUserDTO.Save.class) @RequestBody BusinessUserDTO form)
     {
-//        // 验证验证码
-//        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
-//        if (!isCaptchaValid) {
-//            return R.error("验证码错误或已失效");
-//        }
+        // 验证验证码
+        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
+        if (!isCaptchaValid) {
+            return R.error("验证码错误或已失效");
+        }
 
         // 验证证件号码是否已注册
         BusinessUser existIdNumber = businessUserService.getByIdNumber(form.getIdNumber());

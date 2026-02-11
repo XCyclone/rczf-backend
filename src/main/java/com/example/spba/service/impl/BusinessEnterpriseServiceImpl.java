@@ -133,7 +133,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
 
             }
 
-            return R.success("标签添加成功");
+            return R.success(tagInfoId);
 
         } catch (Exception e) {
             e.printStackTrace();

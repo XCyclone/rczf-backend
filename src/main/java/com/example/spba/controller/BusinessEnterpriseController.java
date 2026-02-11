@@ -35,10 +35,10 @@ public class BusinessEnterpriseController extends BaseController {
      */
     @PostMapping("/register/apply")
     public R registerApply(@Validated(BusinessEnterpriseDTO.Save.class) @RequestBody BusinessEnterpriseDTO form) {
-//        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
-//        if (!isCaptchaValid) {
-//            return R.error("验证码错误或已失效");
-//        }
+        boolean isCaptchaValid = captchaService.validateCaptcha(form.getCaptchaId(), form.getCaptchaCode());
+        if (!isCaptchaValid) {
+            return R.error("验证码错误或已失效");
+        }
         
         // 这里已经在Service层做了验证，所以直接调用
         return businessEnterpriseService.registerApply(form);

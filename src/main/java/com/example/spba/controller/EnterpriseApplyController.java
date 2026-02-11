@@ -22,23 +22,23 @@ public class EnterpriseApplyController extends BaseController {
     @Resource
     private EnterpriseApplyService enterpriseApplyService;
 
-    /**
-     * 新增标签接口
-     * @param tag 申请标签
-     * @param title 标签名称
-     * @param files 图片文件列表
-     * @return 操作结果
-     */
-    @PostMapping(value = "/addTag", consumes = "multipart/form-data")
-    public R addTag(@RequestParam("tag") String tag,
-                    @RequestParam("title") String title,
-                    @RequestPart("files") List<MultipartFile> files) {
-        // 可以在这里获取当前用户ID进行权限验证或日志记录
-        String currentUserId = getCurrentUserId();
-        System.out.println("当前操作用户ID: " + currentUserId);
-        
-        return enterpriseApplyService.addTag(tag, title, files);
-    }
+//    /**
+//     * 新增标签接口
+//     * @param tag 申请标签
+//     * @param title 标签名称
+//     * @param files 图片文件列表
+//     * @return 操作结果
+//     */
+//    @PostMapping(value = "/addTag", consumes = "multipart/form-data")
+//    public R addTag(@RequestParam("tag") String tag,
+//                    @RequestParam("title") String title,
+//                    @RequestPart("files") List<MultipartFile> files) {
+//        // 可以在这里获取当前用户ID进行权限验证或日志记录
+//        String currentUserId = getCurrentUserId();
+//        System.out.println("当前操作用户ID: " + currentUserId);
+//
+//        return enterpriseApplyService.addTag(tag, title, files);
+//    }
     
     /**
      * 企业申请提交接口
