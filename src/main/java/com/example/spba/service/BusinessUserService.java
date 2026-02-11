@@ -74,4 +74,7 @@ public interface BusinessUserService
      * @param info 审批附言
      */
     void approveUpdate(String businessUserId, boolean approveStatus, String info);
+
+
+    R delUser(String userId);
 }

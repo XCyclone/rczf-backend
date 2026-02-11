@@ -1,15 +1,17 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.spba.dao.ApplicationIndustryTalentMapper;
-import com.example.spba.dao.ViewApplicationIndustryMapper;
+import com.example.spba.dao.*;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.domain.entity.ApplicationIndustryTalent;
+import com.example.spba.domain.entity.BusinessUser;
+import com.example.spba.domain.entity.BusinessUserDel;
 import com.example.spba.domain.entity.ViewApplicationIndustry;
 import com.example.spba.service.EnterpriseApplyService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     
     @Autowired
     private ViewApplicationIndustryMapper viewApplicationIndustryMapper;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -148,4 +151,5 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             return R.error("申请修改失败: " + e.getMessage());
         }
     }
+
 }

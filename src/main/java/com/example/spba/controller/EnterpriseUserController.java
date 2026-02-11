@@ -4,14 +4,24 @@ import com.example.spba.domain.dto.BusinessUserApproveDTO;
 import com.example.spba.domain.dto.BusinessUserUpdateApproveDTO;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
 import com.example.spba.domain.dto.EnterpriseUsersRequestDTO;
+import com.example.spba.domain.entity.BusinessUser;
+import com.example.spba.domain.entity.BusinessUserDel;
+import com.example.spba.domain.entity.HouseUsingJnl;
 import com.example.spba.service.BusinessEnterpriseService;
 import com.example.spba.service.BusinessUserService;
+import com.example.spba.dao.BusinessUserMapper;
+import com.example.spba.dao.BusinessUserDelMapper;
+import com.example.spba.dao.HouseUsingJnlMapper;
 import com.example.spba.utils.R;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 
@@ -25,6 +35,8 @@ public class EnterpriseUserController {
 
     @Autowired
     private BusinessUserService businessUserService;
+
+
 
     /**
      * 获取企业下的用户信息
@@ -89,6 +101,25 @@ public class EnterpriseUserController {
             return R.error(e.getMessage());
         } catch (Exception e) {
             return R.error("审批失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除员工信息
+     * @param param 要删除的员工ID
+     * @return 删除结果
+     */
+    @PostMapping("/del/user")
+    @Transactional
+    public R deleteUser(@RequestAttribute(CURRENT_USER_ID) String enterpriseId, @RequestBody Map<String, String> param) {
+        try {
+            String userId = param.get("userId");
+            return businessUserService.delUser(userId);
+            
+        } catch (IllegalArgumentException e) {
+            return R.error(e.getMessage());
+        } catch (Exception e) {
+            return R.error("删除员工信息失败：" + e.getMessage());
         }
     }
 }

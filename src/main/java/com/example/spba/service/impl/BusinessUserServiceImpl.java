@@ -1,17 +1,13 @@
 package com.example.spba.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.spba.dao.BusinessEnterpriseMapper;
-import com.example.spba.dao.BusinessUserApplyMapper;
-import com.example.spba.dao.BusinessUserMapper;
+import com.example.spba.dao.*;
 import com.example.spba.domain.dto.BusinessUserDTO;
 import com.example.spba.domain.dto.BusinessUserUpdateDTO;
-import com.example.spba.domain.entity.BusinessEnterprise;
-import com.example.spba.domain.entity.BusinessUserApply;
-import com.example.spba.domain.entity.User;
-import com.example.spba.domain.entity.BusinessUser;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.UserService;
 import com.example.spba.service.BusinessUserService;
 import com.example.spba.service.RoleUserRelService;
@@ -26,6 +22,7 @@ import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
 
 @Service
@@ -48,6 +45,11 @@ public class BusinessUserServiceImpl implements BusinessUserService
     @Autowired
     private BusinessUserApplyMapper businessUserApplyMapper;
 
+    @Autowired
+    private BusinessUserDelMapper businessUserDelMapper;
+
+    @Autowired
+    private HouseUsingJnlMapper houseUsingJnlMapper;
     @Override
     public BusinessUser getByMobile(String mobile)
     {
@@ -518,5 +520,54 @@ public class BusinessUserServiceImpl implements BusinessUserService
             // 更新申请状态为拒绝
             updateApplyStatus(latestApply.getId(), 2, info); // 2-审核拒绝
         }
+    }
+
+
+    @Override
+    public R delUser(String userId) {
+        // 1. 参数校验
+        if (userId == null || userId.trim().isEmpty()) {
+            return R.error("员工ID不能为空");
+        }
+
+        // 2. 查询要删除的员工信息
+        BusinessUser user = businessUserMapper.selectById(userId);
+        if (user == null) {
+            return R.error("员工信息不存在");
+        }
+
+        // 3. 校验该员工是否有未结束的租房记录
+        int activeRentals = houseUsingJnlMapper.countActiveRentals(userId);
+        if (activeRentals > 0) {
+            return R.error("该员工有未结束的租房记录，无法删除");
+        }
+
+        // 4. 将员工信息复制到删除表
+        BusinessUserDel userDel = new BusinessUserDel();
+        BeanUtils.copyProperties(user, userDel);
+//        // 生成新的ID用于删除表
+//        userDel.setId(UUID.randomUUID().toString().replace("-", ""));
+
+        // 插入到删除表
+        businessUserDelMapper.insert(userDel);
+
+        // 5. 从原表删除员工信息
+        businessUserMapper.deleteById(userId);
+
+        HashMap where = new HashMap<>();
+        where.put("id", userId);
+        HashMap info = userService.getInfo(where);
+        if (info == null) {
+            return R.error("用户不存在");
+        }
+
+        // 删除角色关联
+        roleUserRelService.removeUserRoles(userId);
+
+        Boolean res = userService.removeById(userId);
+        if (res.equals(false)) {
+            throw new RuntimeException("用户信息删除失败");
+        }
+        return R.success("用户信息删除成功");
     }
 }

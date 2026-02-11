@@ -16,4 +16,5 @@ public interface EnterpriseApplyService {
     R withdrawApplication(String applicationId, String userId);
     
     R updateApplication(EnterpriseUpdateDTO submitDTO, String userId, String userName);
+
 }
