@@ -73,6 +73,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
         QueryWrapper<BusinessEnterprise> wrapper = new QueryWrapper<>();
         wrapper.eq("enterprise_name", form.getCompanyName());
+        wrapper.eq("reg_category", form.getRegType());
         BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectOne(wrapper);
         if(businessEnterprise == null){
             return R.error("该工作单位不存在");
@@ -123,7 +124,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
         if (apply == null) {
             throw new IllegalArgumentException("申请记录不存在");
         }
-        if (userId != apply.getCompanyId()){
+        if (!userId.equals(apply.getCompanyId())){
             throw new IllegalArgumentException("您没有权限审批该申请");
         }
         

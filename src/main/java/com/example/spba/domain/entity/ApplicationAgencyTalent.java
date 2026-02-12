@@ -8,8 +8,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-@TableName("application_industry_talent")
-public class ApplicationIndustryTalent implements Serializable {
+@TableName("application_agency_talent")
+public class ApplicationAgencyTalent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /** 申请ID（主键） */
@@ -52,16 +52,16 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 申请人ID */
     private String applicantId;
 
-    /** 申请人证件号码 */
+    /** 申请人证件号 */
     private String applicantZjhm;
 
     /** 申请人姓名 */
     private String applicantName;
 
-    /** 申请人所在企业ID */
+    /** 申请人工作单位ID */
     private String applicantCompanyId;
 
-    /** 申请人所在企业统一信用代码 */
+    /** 申请人工作单位统一信用代码 */
     private String applicantCompanyUscc;
 
     /** 是否存在劳动合同关系：1-是 */
@@ -76,7 +76,10 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 申请人房产地址 */
     private String houseaddress;
 
-    /** 申请状态：1-提交/待审核；3-工作单位审核通过；4-工作单位审核拒绝；5-住建委审核中；6-住建委审核通过；7-住建委审核拒绝；14-轮候排序；15-确定配租/待选房；16-选房完成 */
+    /** 申请附件ID */
+    private String attachmentId;
+
+    /** 申请状态：0-撤回/待提交；1-提交/待审核；2-工作单位审核中；3-工作单位审核通过；4-工作单位审核拒绝；5-归口单位审核中；6-归口单位审核通过；7-归口单位审核拒绝；8-住建委审核中；9-住建委审核通过；10-住建委审核拒绝；11-组织部审核中；12-组织部审核通过；13-组织部审核拒绝；14-轮候排序；15-确定配租/待选房；16-选房完成 */
     private Integer applyStatus;
 
     /** 申请排序 */
@@ -85,22 +88,34 @@ public class ApplicationIndustryTalent implements Serializable {
     /** 当前排序 */
     private Integer currentSort;
 
-    /** 企业审核日期 */
+    /** 单位审核日期 */
     private String companyAuditDate;
 
-    /** 企业审核时间 */
+    /** 单位审核时间 */
     private String companyAuditTime;
 
-    /** 企业审核人 */
+    /** 单位审核人 */
     private String companyAuditor;
 
-    /** 企业审核意见 */
+    /** 单位审核意见 */
     private String companyAuditRemark;
+
+    /** 归口单位审核日期 */
+    private String chargeUnitAuditDate;
+
+    /** 归口单位审核时间 */
+    private String chargeUnitAuditTime;
+
+    /** 归口单位审核人 */
+    private String chargeUnitAuditor;
+
+    /** 归口单位审核意见 */
+    private String chargeUnitAuditRemark;
 
     /** 住建委审核日期 */
     private String housingAuditDate;
 
-    /** 住建委审核日期 */
+    /** 住建委审核时间 */
     private String housingAuditTime;
 
     /** 住建委审核人 */
@@ -114,6 +129,18 @@ public class ApplicationIndustryTalent implements Serializable {
 
     /** 住建委审核是否享有保障房待遇true-是；false-否 */
     private Boolean housingAuditQualification;
+
+    /** 组织部审核日期 */
+    private String orgAuditDate;
+
+    /** 组织部审核时间 */
+    private String orgAuditTime;
+
+    /** 组织部审核人 */
+    private String orgAuditor;
+
+    /** 组织部审核意见 */
+    private String orgAuditRemark;
 
     /** 保留字段1 */
     private String reserve1;
