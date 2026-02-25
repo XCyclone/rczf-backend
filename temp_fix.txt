@@ -1,0 +1,1 @@
+需要将UserRegisterController.java中的form.getUserId()替换为form.getId()

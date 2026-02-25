@@ -6,6 +6,8 @@ import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.service.EnterpriseApplyService;
 import com.example.spba.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +25,8 @@ import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 @RequestMapping("/enterprise/apply")
 @Validated
 public class EnterpriseApplyController extends BaseController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(EnterpriseApplyController.class);
 
     @Resource
     private EnterpriseApplyService enterpriseApplyService;
@@ -55,8 +59,10 @@ public class EnterpriseApplyController extends BaseController {
      */
     @PostMapping("/submit")
     public R submitApplication(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestAttribute(CURRENT_USERNAME) String userName, @Valid @RequestBody EnterpriseSubmitDTO submitDTO) {
-
-        return enterpriseApplyService.submitApplication(submitDTO, userId, userName);
+        logger.info("[企业申请提交] 用户ID: {}, 用户名: {}, 申请参数: {}", userId, userName, submitDTO);
+        R result = enterpriseApplyService.submitApplication(submitDTO, userId, userName);
+        logger.info("[企业申请提交] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
+        return result;
     }
 
 
@@ -69,9 +75,11 @@ public class EnterpriseApplyController extends BaseController {
     public R queryViewApplications() {
         // 可以根据当前用户ID进行数据过滤
         String currentUserId = getCurrentUserId();
-        System.out.println("查询申请的用户ID: " + currentUserId);
+        logger.info("[企业申请查询] 用户ID: {}", currentUserId);
         
-        return enterpriseApplyService.queryViewApplications();
+        R result = enterpriseApplyService.queryViewApplications();
+        logger.info("[企业申请查询] 完成，用户ID: {}, 结果: {}", currentUserId, result.getMessage());
+        return result;
     }
     
     /**
@@ -83,7 +91,11 @@ public class EnterpriseApplyController extends BaseController {
     public R withdrawApplication(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestBody Map<String,String> param) {
         // 获取当前用户ID，用于权限验证
         String applicationId = param.get("applicationId");
-        return enterpriseApplyService.withdrawApplication(applicationId, userId);
+        logger.info("[企业申请撤回] 用户ID: {}, 申请ID: {}", userId, applicationId);
+        
+        R result = enterpriseApplyService.withdrawApplication(applicationId, userId);
+        logger.info("[企业申请撤回] 完成，用户ID: {}, 申请ID: {}, 结果: {}", userId, applicationId, result.getMessage());
+        return result;
     }
     
     /**
@@ -93,19 +105,23 @@ public class EnterpriseApplyController extends BaseController {
      */
     @PostMapping("/query/community")
     public R queryCommunitiesByProject(@RequestBody Map<String, String> param) {
+        String projectId = param.get("projectId");
+        logger.info("[查询项目小区] 项目ID: {}", projectId);
+        
+        // 参数校验
+        if (projectId == null || projectId.trim().isEmpty()) {
+            logger.error("[查询项目小区] 项目ID为空");
+            return R.error("项目ID不能为空");
+        }
+        
         try {
-            String projectId = param.get("projectId");
-            
-            // 参数校验
-            if (projectId == null || projectId.trim().isEmpty()) {
-                return R.error("项目ID不能为空");
-            }
-            
             // 查询该项目关联的小区列表
             List<String> communityIds = projectCommunityMapper.selectCommunityIdsByProjectId(projectId);
+            logger.info("[查询项目小区] 查询完成，项目ID: {}, 小区数量: {}", projectId, communityIds.size());
             
             return R.success(communityIds);
         } catch (Exception e) {
+            logger.error("[查询项目小区] 查询失败，项目ID: {}, 异常: {}", projectId, e.getMessage(), e);
             return R.error("查询小区信息失败: " + e.getMessage());
         }
     }
@@ -123,11 +139,18 @@ public class EnterpriseApplyController extends BaseController {
         try {
             // 获取申请ID
             String applicationId = submitDTO.getApplicationId();
+            logger.info("[企业申请修改] 用户ID: {}, 用户名: {}, 申请ID: {}, 修改参数: {}", userId, userName, applicationId, submitDTO);
+            
             if (applicationId == null || applicationId.trim().isEmpty()) {
+                logger.error("[企业申请修改] 申请ID为空，用户ID: {}", userId);
                 return R.error("申请ID不能为空");
             }
-            return enterpriseApplyService.updateApplication(submitDTO, userId, userName);
+            
+            R result = enterpriseApplyService.updateApplication(submitDTO, userId, userName);
+            logger.info("[企业申请修改] 完成，用户ID: {}, 申请ID: {}, 结果: {}", userId, applicationId, result.getMessage());
+            return result;
         } catch (Exception e) {
+            logger.error("[企业申请修改] 修改失败，用户ID: {}, 申请ID: {}, 异常: {}", userId, submitDTO.getApplicationId(), e.getMessage(), e);
             return R.error("申请修改失败: " + e.getMessage());
         }
     }

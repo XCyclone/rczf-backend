@@ -14,6 +14,8 @@ import com.example.spba.service.RoleUserRelService;
 import com.example.spba.constant.ProjectConstants;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.*;
 @Service
 public class BusinessUserServiceImpl implements BusinessUserService
 {
+    private static final Logger logger = LoggerFactory.getLogger(BusinessUserServiceImpl.class);
     @Autowired
     private UserService userService;
 
@@ -75,6 +78,8 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
     @Override
     public R register(BusinessUserDTO form) {
+        logger.info("[用户注册] 开始处理用户注册申请，姓名: {}, 手机号: {}, 工作单位: {}, 注册类型: {}", 
+                   form.getName(), form.getMobile(), form.getCompanyName(), form.getRegType());
         // 创建用户申请实体
         BusinessUserApply apply = new BusinessUserApply();
 
@@ -83,8 +88,10 @@ public class BusinessUserServiceImpl implements BusinessUserService
         wrapper.eq("reg_category", form.getRegType());
         BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectOne(wrapper);
         if(businessEnterprise == null){
+            logger.error("[用户注册] 工作单位不存在，单位名称: {}, 注册类型: {}", form.getCompanyName(), form.getRegType());
             return R.error("该工作单位不存在");
         }
+        logger.info("[用户注册] 找到匹配的企业，企业ID: {}, 企业名称: {}", businessEnterprise.getId(), businessEnterprise.getEnterpriseName());
         form.setCompanyId(businessEnterprise.getId());
 
         // 生成申请ID和用户ID
@@ -126,6 +133,8 @@ public class BusinessUserServiceImpl implements BusinessUserService
     @Transactional(rollbackFor = Exception.class)
     public void approve(String applyId, boolean approveStatus, String info, String userId)
     {
+        logger.info("[用户注册审批] 开始审批用户注册申请，申请ID: {}, 审批人ID: {}, 审批结果: {}, 审批意见: {}", 
+                   applyId, userId, approveStatus ? "通过" : "拒绝", info);
         // 1. 查询申请记录
         BusinessUserApply apply = businessUserApplyMapper.selectById(applyId);
         if (apply == null) {

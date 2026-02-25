@@ -14,6 +14,8 @@ import com.example.spba.service.CaptchaService;
 import com.example.spba.service.PublicService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/public")
 public class PublicController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(PublicController.class);
 
     @Autowired
     private InfoParametersMapper infoParametersMapper;
@@ -51,9 +55,14 @@ public class PublicController {
     @PostMapping("/query/country")
     public R queryCountry() {
         try {
+            logger.info("[查询国家信息] 开始查询国家信息");
+            
             List<String> countryList = infoParametersMapper.selectByType("country");
+            logger.info("[查询国家信息] 查询完成，返回国家数量: {}", countryList.size());
+            
             return R.success(countryList);
         } catch (Exception e) {
+            logger.error("[查询国家信息] 查询失败，异常: {}", e.getMessage(), e);
             return R.error("查询国家信息失败：" + e.getMessage());
         }
     }
@@ -66,15 +75,21 @@ public class PublicController {
     @PostMapping("/query/enterprise")
     public R queryEnterprise() {
         try {
+            logger.info("[查询企业信息] 开始查询企业信息");
+            
             QueryWrapper queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("reg_category", 1);
             List<BusinessEnterprise> enterpriseList = businessEnterpriseMapper.selectList(queryWrapper);
+            
             Map<String, String> enterpriseMap = new HashMap<>();
             for (BusinessEnterprise enterprise : enterpriseList) {
                 enterpriseMap.put(enterprise.getId(), enterprise.getEnterpriseName());
             }
+            
+            logger.info("[查询企业信息] 查询完成，返回企业数量: {}", enterpriseList.size());
             return R.success(publicService.convertKeyValueToValueText(enterpriseMap));
         } catch (Exception e) {
+            logger.error("[查询企业信息] 查询失败，异常: {}", e.getMessage(), e);
             return R.error("查询企业信息失败：" + e.getMessage());
         }
     }
@@ -86,10 +101,15 @@ public class PublicController {
     @PostMapping("/captcha")
     public R getCaptcha() {
         try {
+            logger.info("[获取验证码] 开始生成验证码");
+            
             // 生成5分钟过期的验证码
             Map<String, Object> captchaResult = captchaService.generateCaptcha(5);
+            logger.info("[获取验证码] 验证码生成完成");
+            
             return R.success(captchaResult);
         } catch (Exception e) {
+            logger.error("[获取验证码] 生成失败，异常: {}", e.getMessage(), e);
             return R.error("获取验证码失败：" + e.getMessage());
         }
     }
@@ -129,11 +149,12 @@ public class PublicController {
     @PostMapping("/query/project")
     public R queryProject() {
         try {
+            logger.info("[查询项目信息] 开始查询项目信息");
+            
             QueryWrapper<ProjectInfo> queryWrapper = new QueryWrapper<>();
 
             //获取当前时间 格式yyyyMMdd hh:mm:ss
             String currentDate = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
-
 
             queryWrapper.lt("apply_start_time", currentDate);
             queryWrapper.gt("apply_end_time", currentDate);
@@ -155,9 +176,11 @@ public class PublicController {
                 result.add(dto);
             }
             
+            logger.info("[查询项目信息] 查询完成，返回项目数量: {}", projectList.size());
             return R.success(result);
             
         } catch (Exception e) {
+            logger.error("[查询项目信息] 查询失败，异常: {}", e.getMessage(), e);
             return R.error("查询项目信息失败：" + e.getMessage());
         }
     }
@@ -169,6 +192,8 @@ public class PublicController {
     @PostMapping("/query/enterpriseLoc")
     public R queryEnterpriseLocation() {
         try {
+            logger.info("[查询企业属地信息] 开始查询企业属地信息");
+            
             // 查询parent_id为200的部门信息
             QueryWrapper<SysDept> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("parent_id", 200);
@@ -183,8 +208,10 @@ public class PublicController {
                 result.add(deptInfo);
             }
             
+            logger.info("[查询企业属地信息] 查询完成，返回属地数量: {}", deptList.size());
             return R.success(result);
         } catch (Exception e) {
+            logger.error("[查询企业属地信息] 查询失败，异常: {}", e.getMessage(), e);
             return R.error("查询企业属地信息失败：" + e.getMessage());
         }
     }

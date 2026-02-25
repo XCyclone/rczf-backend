@@ -13,6 +13,8 @@ import com.example.spba.service.RoleService;
 import com.example.spba.service.RoleUserRelService;
 import com.example.spba.utils.Function;
 import com.example.spba.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.DigestUtils;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 @RestController
 public class UserController
 {
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserService userService;
@@ -62,6 +65,8 @@ public class UserController
                           @RequestParam(name = "page", defaultValue = "1") Integer page,
                           @RequestParam(name = "size", defaultValue = "15") Integer size)
     {
+        logger.info("[用户列表查询] username: {}, role: {}, status: {}, page: {}, size: {}", username, role, status, page, size);
+        
         HashMap where = new HashMap();
         where.put("username", username);
         where.put("role", role);
@@ -69,7 +74,8 @@ public class UserController
 
         Page<HashMap> pages = new Page<>(page, size);
         Page<HashMap> list = userService.getList(pages, where);
-
+        
+        logger.info("[用户列表查询] 查询完成，返回记录数: {}", list.getRecords().size());
         return R.success(list);
     }
 
@@ -81,6 +87,8 @@ public class UserController
     @GetMapping("/user/{id}")
     public R getUserInfo(@PathVariable("id") @NotBlank(message = "参数错误") String userId)
     {
+        logger.info("[用户详情查询] 用户ID: {}", userId);
+        
         HashMap data = new HashMap();
         User info = userService.getById(userId);
         if (info != null) {
@@ -90,6 +98,9 @@ public class UserController
             // 从 role_user_rel 表获取角色列表
             List<String> roleIds = roleUserRelService.getRoleIdsByUserId(userId);
             data.put("role", roleIds);
+            logger.info("[用户详情查询] 查询成功，用户名: {}", info.getUsername());
+        } else {
+            logger.warn("[用户详情查询] 用户不存在，用户ID: {}", userId);
         }
 
         return R.success(data);

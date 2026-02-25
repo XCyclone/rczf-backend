@@ -10,7 +10,10 @@ import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.service.ApplicationIndustryService;
 import com.example.spba.service.ApplicationLeadingService;
 import com.example.spba.service.ApplicationService;
+import com.example.spba.service.impl.BusinessUserServiceImpl;
 import com.example.spba.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +40,8 @@ public class UserApplyController {
     @Autowired
     private ApplicationService applicationService;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserApplyController.class);
+
     /**
      * 机关单位申请提交接口
      * @param form 申请参数
@@ -45,7 +50,10 @@ public class UserApplyController {
     @PostMapping("/agency/submit")
     public R submitAgencyApply(@RequestAttribute(CURRENT_USER_ID) String userId,
                               @Validated(AgencyApplySubmitDTO.Save.class) @RequestBody AgencyApplySubmitDTO form) {
-        return applicationAgencyService.submitAgencyApply(userId, form);
+        logger.info("[机关单位申请提交] 用户ID: {}, 申请参数: {}", userId, form);
+        R result = applicationAgencyService.submitAgencyApply(userId, form);
+        logger.info("[机关单位申请提交] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
+        return result;
     }
     
     /**
@@ -58,9 +66,13 @@ public class UserApplyController {
                                 @RequestBody Map<String, String> params) {
         String applicationId = params.get("applicationId");
         if (applicationId == null || applicationId.trim().isEmpty()) {
+            logger.warn("[机关单位申请撤回] 申请ID为空，用户ID: {}", userId);
             return R.error("申请ID不能为空");
         }
-        return applicationAgencyService.withdrawAgencyApply(userId, applicationId);
+        logger.info("[机关单位申请撤回] 用户ID: {}, 申请ID: {}", userId, applicationId);
+        R result = applicationAgencyService.withdrawAgencyApply(userId, applicationId);
+        logger.info("[机关单位申请撤回] 完成，用户ID: {}, 申请ID: {}, 结果: {}", userId, applicationId, result.getMessage());
+        return result;
     }
     
     /**
@@ -71,7 +83,10 @@ public class UserApplyController {
     @PostMapping("/agency/update")
     public R updateAgencyApply(@RequestAttribute(CURRENT_USER_ID) String userId,
                               @Validated(AgencyApplyUpdateDTO.Save.class) @RequestBody AgencyApplyUpdateDTO form) {
-        return applicationAgencyService.updateAgencyApply(userId, form);
+        logger.info("[机关单位申请修改] 用户ID: {}, 修改参数: {}", userId, form);
+        R result = applicationAgencyService.updateAgencyApply(userId, form);
+        logger.info("[机关单位申请修改] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
+        return result;
     }
     
     /**

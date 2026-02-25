@@ -15,6 +15,8 @@ import com.example.spba.dao.BusinessUserMapper;
 import com.example.spba.dao.BusinessUserDelMapper;
 import com.example.spba.dao.HouseUsingJnlMapper;
 import com.example.spba.utils.R;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,8 @@ import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 @Validated
 public class EnterpriseUserController {
 
+    private static final Logger logger = LoggerFactory.getLogger(EnterpriseUserController.class);
+
     @Autowired
     private BusinessEnterpriseService businessEnterpriseService;
 
@@ -47,13 +51,17 @@ public class EnterpriseUserController {
     @PostMapping("/getUserInfo")
     public R getEnterpriseUsers(@RequestAttribute(CURRENT_USER_ID) String userId) {
         try {
+            logger.info("[企业用户查询] 开始查询企业用户信息，企业ID: {}", userId);
             String enterpriseId = userId;
 
             List<EnterpriseUserResponseDTO> users = businessEnterpriseService.getEnterpriseUsers(enterpriseId);
+            logger.info("[企业用户查询] 查询成功，企业ID: {}, 返回用户数: {}", userId, users.size());
             return R.success(users);
         } catch (IllegalArgumentException e) {
+            logger.error("[企业用户查询] 参数异常，企业ID: {}, 异常: {}", userId, e.getMessage(), e);
             return R.error(e.getMessage());
         } catch (Exception e) {
+            logger.error("[企业用户查询] 查询失败，企业ID: {}, 异常: {}", userId, e.getMessage(), e);
             return R.error("查询用户信息失败：" + e.getMessage());
         }
     }
@@ -67,6 +75,9 @@ public class EnterpriseUserController {
     public R approve(@RequestAttribute(CURRENT_USER_ID) String userId, @Validated @RequestBody BusinessUserApproveDTO form)
     {
         try {
+            logger.info("[用户注册审批] 开始审批用户注册，审批人ID: {}, 申请ID: {}, 审批结果: {}, 审批意见: {}", 
+                       userId, form.getBusinessUserId(), form.isApproved() ? "通过" : "拒绝", form.getInfo());
+            
             businessUserService.approve(
                     form.getBusinessUserId(), // 这里现在是applyId
                     form.isApproved(),
@@ -74,10 +85,13 @@ public class EnterpriseUserController {
             );
 
             String message = form.isApproved() ? "审批成功" : "已拒绝该注册申请";
+            logger.info("[用户注册审批] 审批完成，审批人ID: {}, 申请ID: {}, 结果: {}", userId, form.getBusinessUserId(), message);
             return R.success(message);
         } catch (IllegalArgumentException e) {
+            logger.error("[用户注册审批] 参数异常，审批人ID: {}, 申请ID: {}, 异常: {}", userId, form.getBusinessUserId(), e.getMessage(), e);
             return R.error(e.getMessage());
         } catch (Exception e) {
+            logger.error("[用户注册审批] 审批失败，审批人ID: {}, 申请ID: {}, 异常: {}", userId, form.getBusinessUserId(), e.getMessage(), e);
             return R.error("审批失败：" + e.getMessage());
         }
     }
@@ -91,6 +105,9 @@ public class EnterpriseUserController {
     public R updateApprove(@Validated @RequestBody BusinessUserUpdateApproveDTO form)
     {
         try {
+            logger.info("[用户信息更新审批] 开始审批用户信息更新，申请ID: {}, 审批结果: {}, 审批意见: {}", 
+                       form.getBusinessUserId(), form.isApproved() ? "通过" : "拒绝", form.getInfo());
+            
             businessUserService.approveUpdate(
                     form.getBusinessUserId(),
                     form.isApproved(),
@@ -98,10 +115,13 @@ public class EnterpriseUserController {
             );
 
             String message = form.isApproved() ? "信息更新审批成功" : "已拒绝信息更新申请";
+            logger.info("[用户信息更新审批] 审批完成，申请ID: {}, 结果: {}", form.getBusinessUserId(), message);
             return R.success(message);
         } catch (IllegalArgumentException e) {
+            logger.warn("[用户信息更新审批] 参数异常，申请ID: {}, 异常: {}", form.getBusinessUserId(), e.getMessage());
             return R.error(e.getMessage());
         } catch (Exception e) {
+            logger.error("[用户信息更新审批] 审批失败，申请ID: {}, 异常: {}", form.getBusinessUserId(), e.getMessage(), e);
             return R.error("审批失败：" + e.getMessage());
         }
     }
@@ -116,11 +136,17 @@ public class EnterpriseUserController {
     public R deleteUser(@RequestAttribute(CURRENT_USER_ID) String enterpriseId, @RequestBody Map<String, String> param) {
         try {
             String userId = param.get("userId");
-            return businessUserService.delUser(userId);
+            logger.info("[删除员工] 开始删除员工信息，企业ID: {}, 员工ID: {}", enterpriseId, userId);
+            
+            R result = businessUserService.delUser(userId);
+            logger.info("[删除员工] 删除完成，企业ID: {}, 员工ID: {}, 结果: {}", enterpriseId, userId, result.getMessage());
+            return result;
             
         } catch (IllegalArgumentException e) {
+            logger.warn("[删除员工] 参数异常，企业ID: {}, 员工ID: {}, 异常: {}", enterpriseId, param.get("userId"), e.getMessage());
             return R.error(e.getMessage());
         } catch (Exception e) {
+            logger.error("[删除员工] 删除失败，企业ID: {}, 员工ID: {}, 异常: {}", enterpriseId, param.get("userId"), e.getMessage(), e);
             return R.error("删除员工信息失败：" + e.getMessage());
         }
     }
@@ -132,8 +158,13 @@ public class EnterpriseUserController {
     @PostMapping("/query/userApply")
     public R queryUserApplications(@RequestAttribute(CURRENT_USER_ID) String enterpriseId) {
         try {
-            return businessUserService.queryUserApplications(enterpriseId);
+            logger.info("[查询员工申请记录] 开始查询员工申请记录，企业ID: {}", enterpriseId);
+            
+            R result = businessUserService.queryUserApplications(enterpriseId);
+            logger.info("[查询员工申请记录] 查询完成，企业ID: {}, 结果: {}", enterpriseId, result.getMessage());
+            return result;
         } catch (Exception e) {
+            logger.error("[查询员工申请记录] 查询失败，企业ID: {}, 异常: {}", enterpriseId, e.getMessage(), e);
             return R.error("查询员工申请记录失败：" + e.getMessage());
         }
     }
@@ -149,21 +180,34 @@ public class EnterpriseUserController {
     public R approveEmployeeApplication(@RequestAttribute(CURRENT_USER_ID) String enterpriseId,
                                        @Validated(EmployeeApplicationApproveDTO.Approve.class) @RequestBody EmployeeApplicationApproveDTO form) {
         try {
+            logger.info("[员工申请审批] 开始审批员工申请，企业ID: {}, 申请ID: {}, 审批结果: {}, 审批备注: {}", 
+                       enterpriseId, form.getApplicationId(), 
+                       form.isApproved() != null && form.isApproved() ? "通过" : "拒绝", 
+                       form.getRemark());
+            
             // 1. 根据申请ID查询申请记录，判断申请类型
             String applicationId = form.getApplicationId();
             
             // 2. 执行审批操作
+            R result;
             if (form.isApproved() != null && form.isApproved()) {
                 // 审批通过 - 状态改为工作单位审核通过（3）
-                return businessUserService.approveEmployeeApplication(applicationId, 3, form.getRemark(), enterpriseId);
+                logger.info("[员工申请审批] 审批通过，申请ID: {}, 新状态: 工作单位审核通过(3)", applicationId);
+                result = businessUserService.approveEmployeeApplication(applicationId, 3, form.getRemark(), enterpriseId);
             } else {
                 // 审批拒绝 - 状态改为工作单位审核拒绝（4）
-                return businessUserService.approveEmployeeApplication(applicationId, 4, form.getRemark(), enterpriseId);
+                logger.info("[员工申请审批] 审批拒绝，申请ID: {}, 新状态: 工作单位审核拒绝(4)", applicationId);
+                result = businessUserService.approveEmployeeApplication(applicationId, 4, form.getRemark(), enterpriseId);
             }
             
+            logger.info("[员工申请审批] 审批完成，企业ID: {}, 申请ID: {}, 结果: {}", enterpriseId, applicationId, result.getMessage());
+            return result;
+            
         } catch (IllegalArgumentException e) {
+            logger.warn("[员工申请审批] 参数异常，企业ID: {}, 申请ID: {}, 异常: {}", enterpriseId, form.getApplicationId(), e.getMessage());
             return R.error(e.getMessage());
         } catch (Exception e) {
+            logger.error("[员工申请审批] 审批失败，企业ID: {}, 申请ID: {}, 异常: {}", enterpriseId, form.getApplicationId(), e.getMessage(), e);
             return R.error("审批失败：" + e.getMessage());
         }
     }

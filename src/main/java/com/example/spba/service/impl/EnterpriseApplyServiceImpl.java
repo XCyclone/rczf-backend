@@ -9,6 +9,8 @@ import com.example.spba.domain.entity.ViewApplicationIndustry;
 import com.example.spba.service.EnterpriseApplyService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ import java.util.UUID;
 
 @Service
 public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(EnterpriseApplyServiceImpl.class);
 
     @Autowired
     private ApplicationIndustryMapper applicationIndustryMapper;
@@ -30,13 +34,17 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     @Transactional(rollbackFor = Exception.class)
     public R submitApplication(EnterpriseSubmitDTO submitDTO, String userId, String userName) {
         try {
+            logger.info("[企业申请提交] 开始处理企业申请，企业ID: {}, 企业名称: {}, 项目ID: {}", userId, userName, submitDTO.getProjectId());
+            
             // 校验该企业该项目是否已有在途申请（除了拒绝状态3之外的其他状态）
             if (hasPendingNonRejectedApplication(userId, submitDTO.getProjectId())) {
+                logger.warn("[企业申请提交] 存在在途申请，企业ID: {}, 项目ID: {}", userId, submitDTO.getProjectId());
                 return R.error("该企业在该项目已有在途的审批记录，无法重复提交申请");
             }
             
             // 生成申请ID
             String applicationId = UUID.randomUUID().toString().replace("-", "");
+            logger.info("[企业申请提交] 生成申请ID: {}", applicationId);
             
             // 创建申请记录
             ApplicationIndustry application = new ApplicationIndustry();
@@ -54,12 +62,14 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             application.setApplyStatus(1); // 提交/待审核状态
             
             // 保存申请记录
+            logger.info("[企业申请提交] 准备保存申请记录");
             applicationIndustryMapper.insert(application);
+            logger.info("[企业申请提交] 申请记录保存成功，申请ID: {}", applicationId);
             
             return R.success("企业申请提交成功", applicationId);
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("[企业申请提交] 提交失败，企业ID: {}, 异常: {}", userId, e.getMessage(), e);
             return R.error("企业申请提交失败: " + e.getMessage());
         }
     }
@@ -84,11 +94,15 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     @Override
     public R queryViewApplications() {
         try {
+            logger.info("[企业申请查询] 开始查询企业申请视图");
+            
             // 查询视图中的企业申请记录
             List<ViewApplicationIndustry> applications = viewApplicationIndustryMapper.selectList(null);
+            logger.info("[企业申请查询] 查询完成，返回记录数: {}", applications.size());
+            
             return R.success(applications);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("[企业申请查询] 查询失败，异常: {}", e.getMessage(), e);
             return R.error("查询企业申请视图失败: " + e.getMessage());
         }
     }
@@ -96,35 +110,44 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     @Override
     public R withdrawApplication(String applicationId, String userId) {
         try {
+            logger.info("[企业申请撤回] 开始处理撤回申请，申请ID: {}, 用户ID: {}", applicationId, userId);
+            
             // 参数验证
             if (applicationId == null || applicationId.trim().isEmpty()) {
+                logger.error("[企业申请撤回] 申请ID为空，用户ID: {}", userId);
                 return R.error("申请ID不能为空");
             }
             
             // 查询申请记录
+            logger.info("[企业申请撤回] 查询申请记录，申请ID: {}", applicationId);
             ApplicationIndustry application = applicationIndustryMapper.selectById(applicationId);
             if (application == null) {
+                logger.warn("[企业申请撤回] 申请记录不存在，申请ID: {}", applicationId);
                 return R.error("未找到对应的企业申请记录");
             }
             
             // 检查申请状态，只有状态为1（待审核）的记录才能撤回
             if (application.getApplyStatus() != 1) {
+                logger.warn("[企业申请撤回] 申请状态不允许撤回，当前状态: {}, 申请ID: {}", application.getApplyStatus(), applicationId);
                 return R.error("只有待审核状态的申请才能撤回");
             }
 
             // 检查用户信息，只有发起人可以撤回
             if (application.getEnterpriseId() != userId) {
+                logger.warn("[企业申请撤回] 权限不足，申请用户ID: {}, 操作用户ID: {}", application.getEnterpriseId(), userId);
                 return R.error("只有申请提交人才能撤回");
             }
             
             // 更新申请状态为0（撤回/待提交）
+            logger.info("[企业申请撤回] 更新申请状态为撤回");
             application.setApplyStatus(0);
             applicationIndustryMapper.updateById(application);
+            logger.info("[企业申请撤回] 撤回操作完成，申请ID: {}", applicationId);
             
             return R.success("申请撤回成功");
             
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("[企业申请撤回] 撤回失败，申请ID: {}, 用户ID: {}, 异常: {}", applicationId, userId, e.getMessage(), e);
             return R.error("申请撤回失败: " + e.getMessage());
         }
     }

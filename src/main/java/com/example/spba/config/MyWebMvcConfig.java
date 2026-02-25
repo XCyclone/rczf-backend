@@ -1,5 +1,6 @@
 package com.example.spba.config;
 
+import com.example.spba.interceptor.ApiLoggingInterceptor;
 import com.example.spba.interceptor.EnhancedUserContextInterceptor;
 import com.example.spba.interceptor.SpbaInterceptor;
 import com.example.spba.interceptor.TokenUserInfoInterceptor;
@@ -29,6 +30,12 @@ public class MyWebMvcConfig implements WebMvcConfigurer
     {
         return new TokenUserInfoInterceptor();
     }
+    
+    @Bean
+    public ApiLoggingInterceptor apiLoggingInterceptor()
+    {
+        return new ApiLoggingInterceptor();
+    }
 
     /**
      * 拦截器
@@ -38,7 +45,15 @@ public class MyWebMvcConfig implements WebMvcConfigurer
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // 注册token用户信息拦截器（最先执行，用于验证和获取用户信息）
+        // 注册API日志拦截器（最先执行，记录所有请求日志）
+        registry.addInterceptor(apiLoggingInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/swagger-ui/**") // Swagger UI
+                .excludePathPatterns("/v3/api-docs/**") // API文档
+                .excludePathPatterns("/webjars/**") // 静态资源
+                .excludePathPatterns("/favicon.ico"); // favicon
+        
+        // 注册token用户信息拦截器（用于验证和获取用户信息）
         registry.addInterceptor(tokenUserInfoInterceptor())
                 .addPathPatterns("/**")
                 .excludePathPatterns("/login")
