@@ -4,9 +4,11 @@ import com.example.spba.domain.dto.BusinessUserApproveDTO;
 import com.example.spba.domain.dto.BusinessUserUpdateApproveDTO;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
 import com.example.spba.domain.dto.EnterpriseUsersRequestDTO;
+import com.example.spba.domain.dto.EmployeeApplicationApproveDTO;
 import com.example.spba.domain.entity.BusinessUser;
 import com.example.spba.domain.entity.BusinessUserDel;
 import com.example.spba.domain.entity.HouseUsingJnl;
+import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.service.BusinessEnterpriseService;
 import com.example.spba.service.BusinessUserService;
 import com.example.spba.dao.BusinessUserMapper;
@@ -120,6 +122,49 @@ public class EnterpriseUserController {
             return R.error(e.getMessage());
         } catch (Exception e) {
             return R.error("删除员工信息失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 查询企业下所有员工的全部申请记录
+     * @return 员工申请记录列表
+     */
+    @PostMapping("/query/userApply")
+    public R queryUserApplications(@RequestAttribute(CURRENT_USER_ID) String enterpriseId) {
+        try {
+            return businessUserService.queryUserApplications(enterpriseId);
+        } catch (Exception e) {
+            return R.error("查询员工申请记录失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 员工申请记录审批接口
+     * 实现对员工申请记录的审批，判断企业是产业人才或者机关单位，
+     * 是的话根据审批结果修改状态，状态为3-工作单位审核通过；4-工作单位审核拒绝
+     * @param form 审批参数
+     * @return 审批结果
+     */
+    @PostMapping("/apply/approve")
+    public R approveEmployeeApplication(@RequestAttribute(CURRENT_USER_ID) String enterpriseId,
+                                       @Validated(EmployeeApplicationApproveDTO.Approve.class) @RequestBody EmployeeApplicationApproveDTO form) {
+        try {
+            // 1. 根据申请ID查询申请记录，判断申请类型
+            String applicationId = form.getApplicationId();
+            
+            // 2. 执行审批操作
+            if (form.isApproved() != null && form.isApproved()) {
+                // 审批通过 - 状态改为工作单位审核通过（3）
+                return businessUserService.approveEmployeeApplication(applicationId, 3, form.getRemark(), enterpriseId);
+            } else {
+                // 审批拒绝 - 状态改为工作单位审核拒绝（4）
+                return businessUserService.approveEmployeeApplication(applicationId, 4, form.getRemark(), enterpriseId);
+            }
+            
+        } catch (IllegalArgumentException e) {
+            return R.error(e.getMessage());
+        } catch (Exception e) {
+            return R.error("审批失败：" + e.getMessage());
         }
     }
 }

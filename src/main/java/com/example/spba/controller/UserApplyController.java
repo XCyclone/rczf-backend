@@ -9,6 +9,7 @@ import com.example.spba.domain.dto.LeadingApplyUpdateDTO;
 import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.service.ApplicationIndustryService;
 import com.example.spba.service.ApplicationLeadingService;
+import com.example.spba.service.ApplicationService;
 import com.example.spba.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +33,9 @@ public class UserApplyController {
     
     @Autowired
     private ApplicationLeadingService applicationLeadingService;
+    
+    @Autowired
+    private ApplicationService applicationService;
 
     /**
      * 机关单位申请提交接口
@@ -169,5 +173,16 @@ public class UserApplyController {
     @PostMapping("/leading/query")
     public R queryLeadingApplications(@RequestAttribute(CURRENT_USER_ID) String userId) {
         return applicationLeadingService.queryLeadingApplications(userId);
+    }
+    
+    /**
+     * 统一查询用户的所有申请记录
+     * 查询机关单位员工、产业人才、领军优青人才的所有申请记录
+     * 考虑员工可能在不同时间申请不同类型的人才资格
+     * @return 所有申请记录列表，按申请时间倒序排列
+     */
+    @PostMapping("/query")
+    public R queryAllUserApplications(@RequestAttribute(CURRENT_USER_ID) String userId) {
+        return applicationService.queryAllUserApplications(userId);
     }
 }

@@ -349,4 +349,27 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             return R.error("查询领军优青人才申请记录失败：" + e.getMessage());
         }
     }
+    
+    @Override
+    public R queryAllApplications(String userId) {
+        try {
+            // 1. 校验用户是否存在
+            BusinessUser user = businessUserMapper.selectById(userId);
+            if (user == null) {
+                return R.error("用户信息不存在");
+            }
+            
+            // 2. 查询该用户的所有领军优青人才申请记录（不校验用户类型，查询所有记录）
+            QueryWrapper<ApplicationLeadingTalent> wrapper = new QueryWrapper<>();
+            wrapper.eq("applicant_id", userId);
+            wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
+            
+            List<ApplicationLeadingTalent> applications = applicationLeadingTalentMapper.selectList(wrapper);
+            
+            return R.success(applications);
+            
+        } catch (Exception e) {
+            return R.error("查询领军优青人才申请记录失败：" + e.getMessage());
+        }
+    }
 }

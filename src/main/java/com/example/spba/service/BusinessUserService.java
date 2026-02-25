@@ -77,4 +77,21 @@ public interface BusinessUserService
 
 
     R delUser(String userId);
+
+    /**
+     * 查询企业下所有员工的全部申请记录
+     * @param enterpriseId 企业ID
+     * @return 员工申请记录列表
+     */
+    R queryUserApplications(String enterpriseId);
+
+    /**
+     * 员工申请记录审批
+     * @param applicationId 申请ID
+     * @param status 审批状态：3-工作单位审核通过；4-工作单位审核拒绝
+     * @param remark 审批备注
+     * @param enterpriseId 企业ID（用于权限校验）
+     * @return 审批结果
+     */
+    R approveEmployeeApplication(String applicationId, Integer status, String remark, String enterpriseId);
 }

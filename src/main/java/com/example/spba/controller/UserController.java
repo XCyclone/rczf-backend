@@ -239,8 +239,18 @@ public class UserController
 //            return R.error("验证码错误或已失效");
 //        }
         HashMap where = new HashMap<>();
+        if(loginDTO.getType() == 1){
+            loginDTO.setUsername(loginDTO.getUscc());
+        }
+        else if (loginDTO.getType() == 2){
+            loginDTO.setUsername(loginDTO.getIdNumber());
+        }
+        else{
+            return R.error("用户类型错误");
+        }
         where.put("username", loginDTO.getUsername());
         where.put("password", loginDTO.getPassword());
+        where.put("type", loginDTO.getType());
         where.put("ip", ServletUtil.getClientIP(request));
 
         HashMap res = userService.checkLogin(where);

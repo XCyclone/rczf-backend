@@ -1,12 +1,12 @@
 package com.example.spba.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.spba.constant.ProjectConstants;
-import com.example.spba.domain.entity.User;
-import com.example.spba.domain.entity.LoginLog;
-import com.example.spba.dao.UserMapper;
+import com.example.spba.dao.*;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.UserService;
 import com.example.spba.service.LoginLogService;
 import com.example.spba.service.MenuService;
@@ -34,13 +34,60 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private RoleUserRelService roleUserRelService;
 
+    @Autowired
+    private BusinessEnterpriseMapper businessEnterpriseMapper;
+
+    @Autowired
+    private BusinessUserMapper businessUserMapper;
+
+    @Autowired
+    private BusinessEnterpriseApplyMapper businessEnterpriseApplyMapper;
+
+    @Autowired
+    private BusinessUserApplyMapper businessUserApplyMapper;
+
+
     @Override
     public HashMap checkLogin(HashMap params)
     {
         HashMap result = new HashMap();
         result.put("status", false);
+        String name = null;
 
         HashMap info = this.baseMapper.getInfo(params);
+        if (params.get("type").equals(1)){
+            BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectById(info.get("id").toString());
+            if(businessEnterprise == null){
+                QueryWrapper<BusinessEnterpriseApply> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("enterprise_id", info.get("id").toString());
+                if(businessEnterpriseApplyMapper.selectOne(queryWrapper) != null){
+                    result.put("message", "已申请，请等待审批");
+                }
+                else {
+                    result.put("message", "无此用户");
+                }
+                return result;
+            }
+            else{
+                name = businessEnterprise.getEnterpriseName();
+            }
+        }else {
+            BusinessUser businessUser = businessUserMapper.selectById(info.get("id").toString());
+            if(businessUser == null){
+                QueryWrapper<BusinessUserApply> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("company_id", info.get("id").toString());
+                if(businessUserApplyMapper.selectOne(queryWrapper) != null){
+                    result.put("message", "已申请，请等待审批");
+                }
+                else {
+                    result.put("message", "无此用户");
+                }
+                return result;
+            }
+            else{
+                name = businessUser.getName();
+            }
+        }
         if (info == null || info.get("status").equals(0)) {
             result.put("message", "登录失败");
             return result;
@@ -57,6 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return result;
         }
 
+
         // 登录
         StpUtil.login(info.get("id"));
 
@@ -65,8 +113,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         HashMap data = new HashMap<>();
 //        data.put("avatar", info.get("avatar"));
-        data.put("username", info.get("username"));
+        data.put("userId", info.get("username"));
         data.put("token", StpUtil.getTokenValue());
+        data.put("name", name);
         result.put("data", data);
         result.put("status", true);
 

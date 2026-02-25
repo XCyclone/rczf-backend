@@ -67,14 +67,13 @@ public class UserRegisterController
 
     /**
      * 获取用户信息
-     * @param request 包含用户ID的请求对象
+     * @param
      * @return
      */
     @PostMapping("/getUserInfo")
-    public R getUserInfo(@RequestBody UserInfoRequestDTO request)
+    public R getUserInfo(@RequestAttribute(CURRENT_USER_ID) String userId)
     {
         try {
-            String userId = request.getUser_id();
             Object userInfoWithStatus = businessUserService.getUserInfoWithApprovalStatus(userId);
             if (userInfoWithStatus != null) {
                 return R.success(userInfoWithStatus);
@@ -92,12 +91,11 @@ public class UserRegisterController
      * @return
      */
     @PostMapping("/updateUserPassword")
-    public R updateUserPassword(@RequestBody UpdatePasswordRequestDTO request)
+    public R updateUserPassword(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestBody UpdatePasswordRequestDTO request)
     {
         try {
-            String userId = request.getUser_id();
-            String oldPassword = request.getOld_password();
-            String newPassword = request.getNew_password();
+            String oldPassword = request.getOldPassword();
+            String newPassword = request.getNewPassword();
             
             // 参数校验
             if (userId == null || userId.trim().isEmpty()) {

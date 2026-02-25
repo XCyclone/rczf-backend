@@ -36,4 +36,11 @@ public interface ApplicationLeadingService {
      * @return 申请记录列表
      */
     R queryLeadingApplications(String userId);
+    
+    /**
+     * 查询用户的所有申请记录（统一查询接口）
+     * @param userId 用户ID
+     * @return 所有申请记录列表
+     */
+    R queryAllApplications(String userId);
 }

@@ -345,4 +345,27 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             return R.error("查询机关单位申请记录失败：" + e.getMessage());
         }
     }
+    
+    @Override
+    public R queryAllApplications(String userId) {
+        try {
+            // 1. 校验用户是否存在
+            BusinessUser user = businessUserMapper.selectById(userId);
+            if (user == null) {
+                return R.error("用户信息不存在");
+            }
+            
+            // 2. 查询该用户的所有机关单位申请记录（不校验用户类型，查询所有记录）
+            QueryWrapper<ApplicationAgencyTalent> wrapper = new QueryWrapper<>();
+            wrapper.eq("applicant_id", userId);
+            wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
+            
+            List<ApplicationAgencyTalent> applications = applicationAgencyTalentMapper.selectList(wrapper);
+            
+            return R.success(applications);
+            
+        } catch (Exception e) {
+            return R.error("查询机关单位申请记录失败：" + e.getMessage());
+        }
+    }
 }

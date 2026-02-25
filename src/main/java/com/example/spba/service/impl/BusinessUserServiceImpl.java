@@ -21,9 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class BusinessUserServiceImpl implements BusinessUserService
@@ -50,6 +48,15 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
     @Autowired
     private HouseUsingJnlMapper houseUsingJnlMapper;
+    
+    @Autowired
+    private ApplicationAgencyTalentMapper applicationAgencyTalentMapper;
+    
+    @Autowired
+    private ApplicationIndustryTalentMapper applicationIndustryTalentMapper;
+    
+    @Autowired
+    private ApplicationLeadingTalentMapper applicationLeadingTalentMapper;
     @Override
     public BusinessUser getByMobile(String mobile)
     {
@@ -231,7 +238,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
         // 创建用户账号
         User newUser = new User();
-        newUser.setId(UUID.randomUUID().toString().replace("-", "")); // 生成32位UUID
+        newUser.setId(user.getId()); // 生成32位UUID
         newUser.setUsername(username);
         newUser.setSafe(ProjectConstants.DefaultValue.DEFAULT_SAFE);
         newUser.setPassword(user.getPassword()); // 直接使用 business_user 的 MD5 密码
@@ -570,5 +577,335 @@ public class BusinessUserServiceImpl implements BusinessUserService
             throw new RuntimeException("用户信息删除失败");
         }
         return R.success("用户信息删除成功");
+    }
+    
+    @Override
+    public R queryUserApplications(String enterpriseId) {
+        try {
+            // 1. 校验企业是否存在
+            BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
+            if (enterprise == null) {
+                return R.error("企业信息不存在");
+            }
+            
+            // 2. 查询该企业下所有员工的申请记录
+            List<Object> allApplications = new ArrayList<>();
+            
+            // 2.1 查询机关单位员工申请记录
+            QueryWrapper<ApplicationAgencyTalent> agencyWrapper = new QueryWrapper<>();
+            agencyWrapper.eq("applicant_company_id", enterpriseId);
+            agencyWrapper.orderByDesc("apply_date", "apply_time");
+            List<ApplicationAgencyTalent> agencyApplications = applicationAgencyTalentMapper.selectList(agencyWrapper);
+            
+            // 为机关单位申请添加类型标识
+            for (ApplicationAgencyTalent app : agencyApplications) {
+                Map<String, Object> appWithTypeInfo = new HashMap<>();
+                appWithTypeInfo.put("type", "agency"); // 机关单位申请
+                appWithTypeInfo.put("typeName", "机关单位员工申请");
+                appWithTypeInfo.put("application", app);
+                allApplications.add(appWithTypeInfo);
+            }
+            
+            // 2.2 查询产业人才申请记录
+            QueryWrapper<ApplicationIndustryTalent> industryWrapper = new QueryWrapper<>();
+            industryWrapper.eq("applicant_company_id", enterpriseId);
+            industryWrapper.orderByDesc("apply_date", "apply_time");
+            List<ApplicationIndustryTalent> industryApplications = applicationIndustryTalentMapper.selectList(industryWrapper);
+            
+            // 为产业人才申请添加类型标识
+            for (ApplicationIndustryTalent app : industryApplications) {
+                Map<String, Object> appWithTypeInfo = new HashMap<>();
+                appWithTypeInfo.put("type", "industry"); // 产业人才申请
+                appWithTypeInfo.put("typeName", "产业人才申请");
+                appWithTypeInfo.put("application", app);
+                allApplications.add(appWithTypeInfo);
+            }
+            
+            // 2.3 查询领军优青人才申请记录
+            QueryWrapper<ApplicationLeadingTalent> leadingWrapper = new QueryWrapper<>();
+            leadingWrapper.eq("applicant_company_id", enterpriseId);
+            leadingWrapper.orderByDesc("apply_date", "apply_time");
+            List<ApplicationLeadingTalent> leadingApplications = applicationLeadingTalentMapper.selectList(leadingWrapper);
+            
+            // 为领军优青人才申请添加类型标识
+            for (ApplicationLeadingTalent app : leadingApplications) {
+                Map<String, Object> appWithTypeInfo = new HashMap<>();
+                appWithTypeInfo.put("type", "leading"); // 领军优青人才申请
+                appWithTypeInfo.put("typeName", "领军优青人才申请");
+                appWithTypeInfo.put("application", app);
+                allApplications.add(appWithTypeInfo);
+            }
+            
+            // 3. 按申请时间倒序排列所有申请记录
+            allApplications.sort((a, b) -> {
+                try {
+                    Map<String, Object> appA = (Map<String, Object>) a;
+                    Map<String, Object> appB = (Map<String, Object>) b;
+                    Object applicationA = appA.get("application");
+                    Object applicationB = appB.get("application");
+                    
+                    String dateA = getApplyDate(applicationA);
+                    String timeA = getApplyTime(applicationA);
+                    String dateB = getApplyDate(applicationB);
+                    String timeB = getApplyTime(applicationB);
+                    
+                    // 组合日期时间进行比较
+                    String dateTimeA = dateA + " " + timeA;
+                    String dateTimeB = dateB + " " + timeB;
+                    
+                    return dateTimeB.compareTo(dateTimeA); // 倒序排列
+                } catch (Exception e) {
+                    return 0;
+                }
+            });
+            
+            return R.success(allApplications);
+            
+        } catch (Exception e) {
+            return R.error("查询员工申请记录失败：" + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public R approveEmployeeApplication(String applicationId, Integer status, String remark, String enterpriseId) {
+        try {
+            // 1. 参数校验
+            if (applicationId == null || applicationId.trim().isEmpty()) {
+                return R.error("申请ID不能为空");
+            }
+            
+            if (status == null) {
+                return R.error("审批状态不能为空");
+            }
+            
+            if (enterpriseId == null || enterpriseId.trim().isEmpty()) {
+                return R.error("企业ID不能为空");
+            }
+            
+            // 2. 校验企业是否存在
+            BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
+            if (enterprise == null) {
+                return R.error("企业信息不存在");
+            }
+            
+            // 3. 根据企业类型判断是否可以审批
+            Integer regCategory = enterprise.getRegCategory();
+            if (regCategory == null) {
+                return R.error("企业注册类型信息异常");
+            }
+            
+            // 只有产业人才(1)或机关单位(2)的企业才能审批员工申请
+            if (regCategory != 1 && regCategory != 2) {
+                return R.error("该企业类型不由单位审批");
+            }
+            
+            // 4. 判断申请类型并执行相应审批逻辑
+            String applicationType = detectApplicationType(applicationId);
+            if (applicationType == null) {
+                return R.error("未找到对应的申请记录");
+            }
+            
+            switch (applicationType) {
+                case "agency":
+                    return approveAgencyTalentApplication(applicationId, status, remark, enterprise);
+                case "industry":
+                    return approveIndustryTalentApplication(applicationId, status, remark, enterprise);
+                case "leading":
+                    return approveLeadingTalentApplication(applicationId, status, remark, enterprise);
+                default:
+                    return R.error("不支持的申请类型");
+            }
+            
+        } catch (Exception e) {
+            return R.error("员工申请审批失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 检测申请记录类型
+     * @param applicationId 申请ID
+     * @return 申请类型：agency-机关单位申请，industry-产业人才申请，leading-领军优青人才申请
+     */
+    private String detectApplicationType(String applicationId) {
+        // 先尝试查询机关单位申请
+        ApplicationAgencyTalent agencyApply = applicationAgencyTalentMapper.selectById(applicationId);
+        if (agencyApply != null) {
+            return "agency";
+        }
+        
+        // 再尝试查询产业人才申请
+        ApplicationIndustryTalent industryApply = applicationIndustryTalentMapper.selectById(applicationId);
+        if (industryApply != null) {
+            return "industry";
+        }
+        
+        // 最后尝试查询领军优青人才申请
+        ApplicationLeadingTalent leadingApply = applicationLeadingTalentMapper.selectById(applicationId);
+        if (leadingApply != null) {
+            return "leading";
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 审批机关单位员工申请
+     */
+    private R approveAgencyTalentApplication(String applicationId, Integer status, String remark, BusinessEnterprise enterprise) {
+        // 1. 查询申请记录
+        ApplicationAgencyTalent agencyApply = applicationAgencyTalentMapper.selectById(applicationId);
+        if (agencyApply == null) {
+            return R.error("机关单位申请记录不存在");
+        }
+        
+        // 2. 校验申请状态（必须是待审核状态1）
+        if (agencyApply.getApplyStatus() == null || agencyApply.getApplyStatus() != 1) {
+            return R.error("只有待审核状态的申请才能进行审批");
+        }
+        
+        // 3. 校验企业权限
+        if (!enterprise.getId().equals(agencyApply.getApplicantCompanyId())) {
+            return R.error("无权审批该企业的员工申请");
+        }
+        
+        // 4. 执行审批操作
+        if (status == 3) {
+            // 审批通过 - 状态改为工作单位审核通过（3）
+            agencyApply.setApplyStatus(3);
+        } else if (status == 4) {
+            // 审批拒绝 - 状态改为工作单位审核拒绝（4）
+            agencyApply.setApplyStatus(4);
+        } else {
+            return R.error("无效的审批状态，仅支持3(通过)或4(拒绝)");
+        }
+        
+        // 5. 记录审批时间和审批人信息
+        agencyApply.setCompanyAuditDate(Time.getNowTimeDate("yyyy-MM-dd"));
+        agencyApply.setCompanyAuditTime(Time.getNowTimeDate("HH:mm:ss"));
+        agencyApply.setCompanyAuditor(enterprise.getOperatorName() != null ? enterprise.getOperatorName() : "系统审核员");
+        agencyApply.setCompanyAuditRemark(remark);
+        
+        // 6. 更新数据库
+        applicationAgencyTalentMapper.updateById(agencyApply);
+        
+        String message = status == 3 ? "机关单位员工申请审批通过" : "机关单位员工申请审批拒绝";
+        return R.success(message);
+    }
+    
+    /**
+     * 审批产业人才申请
+     */
+    private R approveIndustryTalentApplication(String applicationId, Integer status, String remark, BusinessEnterprise enterprise) {
+        // 1. 查询申请记录
+        ApplicationIndustryTalent industryApply = applicationIndustryTalentMapper.selectById(applicationId);
+        if (industryApply == null) {
+            return R.error("产业人才申请记录不存在");
+        }
+        
+        // 2. 校验申请状态（必须是待审核状态1）
+        if (industryApply.getApplyStatus() == null || industryApply.getApplyStatus() != 1) {
+            return R.error("只有待审核状态的申请才能进行审批");
+        }
+        
+        // 3. 校验企业权限
+        if (!enterprise.getId().equals(industryApply.getApplicantCompanyId())) {
+            return R.error("无权审批该企业的员工申请");
+        }
+        
+        // 4. 执行审批操作
+        if (status == 3) {
+            // 审批通过 - 状态改为工作单位审核通过（3）
+            industryApply.setApplyStatus(3);
+        } else if (status == 4) {
+            // 审批拒绝 - 状态改为工作单位审核拒绝（4）
+            industryApply.setApplyStatus(4);
+        } else {
+            return R.error("无效的审批状态");
+        }
+        
+        // 5. 记录审批时间和审批人信息
+        industryApply.setCompanyAuditDate(Time.getNowTimeDate("yyyy-MM-dd"));
+        industryApply.setCompanyAuditTime(Time.getNowTimeDate("HH:mm:ss"));
+        industryApply.setCompanyAuditor(enterprise.getOperatorName() != null ? enterprise.getOperatorName() : "系统审核员");
+        industryApply.setCompanyAuditRemark(remark);
+        
+        // 6. 更新数据库
+        applicationIndustryTalentMapper.updateById(industryApply);
+        
+        String message = status == 3 ? "产业人才申请审批通过" : "产业人才申请审批拒绝";
+        return R.success(message);
+    }
+    
+    /**
+     * 审批领军优青人才申请
+     */
+    private R approveLeadingTalentApplication(String applicationId, Integer status, String remark, BusinessEnterprise enterprise) {
+        // 1. 查询申请记录
+        ApplicationLeadingTalent leadingApply = applicationLeadingTalentMapper.selectById(applicationId);
+        if (leadingApply == null) {
+            return R.error("领军优青人才申请记录不存在");
+        }
+        
+        // 2. 校验申请状态（必须是待审核状态1）
+        if (leadingApply.getApplyStatus() == null || leadingApply.getApplyStatus() != 1) {
+            return R.error("只有待审核状态的申请才能进行审批");
+        }
+        
+        // 3. 校验企业权限
+        if (!enterprise.getId().equals(leadingApply.getApplicantCompanyId())) {
+            return R.error("无权审批该企业的员工申请");
+        }
+        
+        // 4. 执行审批操作
+        if (status == 3) {
+            // 审批通过 - 状态改为工作单位审核通过（3）
+            leadingApply.setApplyStatus(3);
+        } else if (status == 4) {
+            // 审批拒绝 - 状态改为工作单位审核拒绝（4）
+            leadingApply.setApplyStatus(4);
+        } else {
+            return R.error("无效的审批状态");
+        }
+        
+        // 5. 记录审批时间和审批人信息
+        leadingApply.setCompanyAuditDate(Time.getNowTimeDate("yyyy-MM-dd"));
+        leadingApply.setCompanyAuditTime(Time.getNowTimeDate("HH:mm:ss"));
+        leadingApply.setCompanyAuditor(enterprise.getOperatorName() != null ? enterprise.getOperatorName() : "系统审核员");
+        leadingApply.setCompanyAuditRemark(remark);
+        
+        // 6. 更新数据库
+        applicationLeadingTalentMapper.updateById(leadingApply);
+        
+        String message = status == 3 ? "领军优青人才申请审批通过" : "领军优青人才申请审批拒绝";
+        return R.success(message);
+    }
+    
+    /**
+     * 获取申请日期
+     */
+    private String getApplyDate(Object application) {
+        if (application instanceof ApplicationAgencyTalent) {
+            return ((ApplicationAgencyTalent) application).getApplyDate();
+        } else if (application instanceof ApplicationIndustryTalent) {
+            return ((ApplicationIndustryTalent) application).getApplyDate();
+        } else if (application instanceof ApplicationLeadingTalent) {
+            return ((ApplicationLeadingTalent) application).getApplyDate();
+        }
+        return "";
+    }
+    
+    /**
+     * 获取申请时间
+     */
+    private String getApplyTime(Object application) {
+        if (application instanceof ApplicationAgencyTalent) {
+            return ((ApplicationAgencyTalent) application).getApplyTime();
+        } else if (application instanceof ApplicationIndustryTalent) {
+            return ((ApplicationIndustryTalent) application).getApplyTime();
+        } else if (application instanceof ApplicationLeadingTalent) {
+            return ((ApplicationLeadingTalent) application).getApplyTime();
+        }
+        return "";
     }
 }
