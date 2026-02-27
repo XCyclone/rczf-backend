@@ -32,7 +32,7 @@ public class BusinessUserDTO
 
     /** 密码 */
     @NotBlank(message = "请输入密码", groups = Save.class)
-    @Size(min = 6, max = 18, message = "密码长度必须在6-18位之间", groups = Save.class)
+//    @Size(min = 6, max = 64, message = "密码长度必须在6-18位之间", groups = Save.class)
     private String password;
 
     /** 出生日期 */

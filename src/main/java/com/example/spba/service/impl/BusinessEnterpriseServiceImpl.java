@@ -93,6 +93,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             tagInfo.setId(tagInfoId);
             tagInfo.setTag(tag);
             tagInfo.setTitle(title);
+            tagInfo.setStatus(0);
 
             // 保存标签信息记录
             businessEnterpriseTagMapper.insert(tagInfo);
@@ -199,12 +200,15 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             officeAddress.setId(UUID.randomUUID().toString().replace("-", ""));
             officeAddress.setEnterpriseId(enterpriseId);
             officeAddress.setOfficeAddress(address);
+            officeAddress.setApplicationId(applyId);
+            officeAddress.setStatus(0);
             businessEnterpriseAddressMapper.insert(officeAddress);
         }
         for (String tag : form.getTags()){
             BusinessEnterpriseTag tagInfo = new BusinessEnterpriseTag();
             tagInfo.setId(tag);
             tagInfo.setEnterpriseId(enterpriseId);
+            tagInfo.setApplicationId(applyId);
             businessEnterpriseTagMapper.updateById(tagInfo);
         }
 
@@ -264,7 +268,17 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         
         // 保存到business_enterprise表
         businessEnterpriseMapper.insert(enterprise);
-        
+        BusinessEnterpriseAddress businessEnterpriseAddress = new BusinessEnterpriseAddress();
+        businessEnterpriseAddress.setStatus(1);
+        QueryWrapper<BusinessEnterpriseAddress> wrapper = new QueryWrapper<>();
+        wrapper.eq("application_id", apply.getId());
+        businessEnterpriseAddressMapper.update(businessEnterpriseAddress,  wrapper);
+        BusinessEnterpriseTag businessEnterpriseTag = new BusinessEnterpriseTag();
+        businessEnterpriseTag.setStatus(1);
+        QueryWrapper<BusinessEnterpriseTag> wrapperTag = new QueryWrapper<>();
+        wrapperTag.eq("application_id", apply.getId());
+        businessEnterpriseTagMapper.update(businessEnterpriseTag, wrapperTag);
+
         // 创建用户账号
         createUserAccount(enterprise);
     }
@@ -541,10 +555,25 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             apply.setOperatorMobile(enterprise.getOperatorMobile());
         }
 
-        if (form.getRegCategory() != null) {
-            apply.setRegCategory(form.getRegCategory());
-        } else {
-            apply.setRegCategory(enterprise.getRegCategory());
+        apply.setRegCategory(enterprise.getRegCategory());
+
+        for(String officeAddress : form.getOfficeAddress()){
+            BusinessEnterpriseAddress address = new BusinessEnterpriseAddress();
+            address.setEnterpriseId(userId);
+            address.setOfficeAddress(officeAddress);
+            address.setApplicationId(applyId);
+            address.setStatus(0);
+            businessEnterpriseAddressMapper.insert(address);
+        }
+
+        for(String tag : form.getTags()){
+            BusinessEnterpriseTag tagEntity = new BusinessEnterpriseTag();
+            QueryWrapper<BusinessEnterpriseTag> tagWrapper = new QueryWrapper<>();
+            tagWrapper.eq("id",  tag);
+            tagEntity.setApplicationId(applyId);
+            tagEntity.setEnterpriseId(userId);
+            tagEntity.setTag(tag);
+            businessEnterpriseTagMapper.update(tagEntity, tagWrapper);
         }
         
         // 设置操作类型和状态
@@ -555,7 +584,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 保存申请信息到business_enterprise_apply表
         businessEnterpriseApplyMapper.insert(apply);
         
-        return R.success("企业信息修改申请已提交，请等待审核", applyId);
+        return R.success(applyId,"企业信息修改申请已提交，请等待审核");
     }
     
     @Override

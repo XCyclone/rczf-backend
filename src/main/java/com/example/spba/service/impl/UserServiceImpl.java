@@ -110,11 +110,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 更新登录信息
         updateLogin(info.get("id").toString(), params.get("ip").toString());
+        
+        // 更新 ever_logged 字段为1（已登录）
+        updateEverLogged(info.get("id").toString(), (Integer) params.get("type"));
 
         HashMap data = new HashMap<>();
 //        data.put("avatar", info.get("avatar"));
         data.put("userId", info.get("username"));
         data.put("token", StpUtil.getTokenValue());
+        data.put("role", roleStr);
         data.put("name", name);
         result.put("data", data);
         result.put("status", true);
@@ -183,5 +187,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         log.setLoginIp(ip);
         loginLogService.save(log);
+    }
+    
+    /**
+     * 更新 ever_logged 字段为1（已登录）
+     * @param id 用户ID
+     * @param type 用户类型：1-企业用户；2-个人用户
+     */
+    private void updateEverLogged(String id, Integer type) {
+        try {
+            if (type == 1) {
+                // 企业用户更新 business_enterprise 表
+                BusinessEnterprise enterprise = new BusinessEnterprise();
+                enterprise.setId(id);
+                enterprise.setEverLogged(1); // 1-已登录
+                businessEnterpriseMapper.updateById(enterprise);
+            } else if (type == 2) {
+                // 个人用户更新 business_user 表
+                BusinessUser user = new BusinessUser();
+                user.setId(id);
+                user.setEverLogged(1); // 1-已登录
+                businessUserMapper.updateById(user);
+            }
+        } catch (Exception e) {
+            // 记录错误但不中断登录流程
+            e.printStackTrace();
+        }
     }
 }

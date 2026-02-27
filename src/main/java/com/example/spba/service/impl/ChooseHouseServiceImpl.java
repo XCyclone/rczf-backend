@@ -31,7 +31,7 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
     private ApplicationAgencyTalentMapper applicationAgencyTalentMapper;
     
     @Autowired
-    private ApplicationIndustryTalentMapper applicationIndustryTalentMapper;
+    private ApplicationIndustryMapper applicationIndustryMapper;
     
     @Autowired
     private ApplicationLeadingTalentMapper applicationLeadingTalentMapper;
@@ -50,27 +50,21 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
             if (enterpriseUser == null) {
                 return R.error("企业用户信息不存在");
             }
-            
-            // 3. 获取企业ID
-            String companyId = enterpriseUser.getId();
-            if (companyId == null || companyId.isEmpty()) {
-                return R.error("企业用户未关联企业信息");
-            }
-            
-            // 4. 查询该企业下产业人才的申请记录（住建委审核通过状态为6）
-            Object latestApplication = getLatestIndustryApplicationApprovedByHousing(companyId);
+
+            // 2. 查询该企业申请记录
+            Object latestApplication = getLatestIndustryApplicationApprovedByHousing(userId);
             if (latestApplication == null) {
-                return R.success(false, "未找到符合条件的产业人才申请记录");
+                return R.success(false, "未找到符合条件的企业申请记录");
             }
             
-            // 5. 获取申请ID
-            String applicationId = getApplicationId(latestApplication);
+            // 3. 获取申请ID
+            String applicationId = ((ApplicationIndustry) latestApplication).getApplicationId();
             if (applicationId == null || applicationId.isEmpty()) {
                 return R.success(false, "申请记录ID无效");
             }
             
-            // 6. 查询个人选房时间表判断是否在选房时间内
-            boolean isInTimeRange = checkIndividualChooseHouseTime(applicationId);
+            // 6. 查询企业选房时间表判断是否在选房时间内
+            boolean isInTimeRange = checkEnterpriseChooseHouseTime(applicationId);
             
             return R.success(isInTimeRange);
             
@@ -116,29 +110,29 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
      * @return 最新的申请记录
      */
     private Object getLatestIndustryApplicationApprovedByHousing(String companyId) {
-        QueryWrapper<ApplicationIndustryTalent> wrapper = new QueryWrapper<>();
+        QueryWrapper<ApplicationIndustry> wrapper = new QueryWrapper<>();
         wrapper.eq("applicant_company_id", companyId);
-        wrapper.eq("apply_status", 6); // 住建委审核通过状态
+        wrapper.eq("apply_status", 4); // 审核通过状态
         wrapper.orderByDesc("apply_date", "apply_time");
         wrapper.last("LIMIT 1");
         
-        return applicationIndustryTalentMapper.selectOne(wrapper);
+        return applicationIndustryMapper.selectOne(wrapper);
     }
     
     /**
-     * 检查个人选房时间是否在有效期内
+     * 检查企业选房时间是否在有效期内
      * @param applicationId 申请ID
      * @return 是否在选房时间内
      */
-    private boolean checkIndividualChooseHouseTime(String applicationId) {
+    private boolean checkEnterpriseChooseHouseTime(String applicationId) {
         try {
             String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
             
-            // 查询个人选房时间表
-            QueryWrapper<TalentChoicehouseTime> wrapper = new QueryWrapper<>();
+            // 查询企业选房时间表
+            QueryWrapper<EnterpriseChoicehouseTime> wrapper = new QueryWrapper<>();
             wrapper.eq("application_id", applicationId);
             
-            List<TalentChoicehouseTime> timeRecords = talentChoicehouseTimeMapper.selectList(wrapper);
+            List<EnterpriseChoicehouseTime> timeRecords = enterpriseChoicehouseTimeMapper.selectList(wrapper);
             return isCurrentTimeInRange(timeRecords, currentTime);
             
         } catch (Exception e) {
@@ -163,8 +157,6 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
         switch (regType) {
             case 2: // 机关单位
                 return applicationAgencyTalentMapper.selectOne((QueryWrapper<ApplicationAgencyTalent>) wrapper);
-//            case 1: // 产业人才
-//                return applicationIndustryTalentMapper.selectOne((QueryWrapper<ApplicationIndustryTalent>) wrapper);
             case 3: // 领军人才
                 return applicationLeadingTalentMapper.selectOne((QueryWrapper<ApplicationLeadingTalent>) wrapper);
             case 4: // 优青人才

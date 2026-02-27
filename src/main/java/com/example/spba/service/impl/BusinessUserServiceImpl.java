@@ -220,7 +220,9 @@ public class BusinessUserServiceImpl implements BusinessUserService
             } else if (user.getRegType().equals(2)) {
                 roleId = "R0005"; // 机关单位员工对应R0005
             } else if (user.getRegType().equals(3)) {
-                roleId = "R0006"; // 领军、优青人才对应R0006
+                roleId = "R0006"; // 领军人才对应R0006
+            } else if (user.getRegType().equals(4)) {
+                roleId = "R0007"; // 优青人才对应R0006
             } else {
                 throw new IllegalArgumentException("未知的注册类型：" + user.getRegType());
             }

@@ -32,6 +32,16 @@ public class BusinessEnterpriseAddress implements Serializable {
     private String officeAddress;
 
     /**
+     * 申请id
+     */
+    private String applicationId;
+
+    /**
+     * 状态
+     */
+    private Integer status;
+
+    /**
      * 保留字段1
      */
     private String reserve1;

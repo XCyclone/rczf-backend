@@ -37,6 +37,16 @@ public class BusinessEnterpriseTag implements Serializable {
     private String title;
 
     /**
+     * 申请id
+     */
+    private String applicationId;
+
+    /**
+     * 状态
+     */
+    private Integer status;
+
+    /**
      * 保留字段1
      */
     private String reserve1;
