@@ -64,16 +64,16 @@ public class UserRegisterController
      * @return 申请结果
      */
     @PostMapping("/update/apply")
-    public R updateApply(@Validated(BusinessUserUpdateDTO.Save.class) @RequestBody BusinessUserUpdateDTO form)
+    public R updateApply(@RequestAttribute(CURRENT_USER_ID) String userId, @RequestBody BusinessUserUpdateDTO form)
     {
         try {
-            logger.info("[用户信息更新申请] 开始处理更新申请，用户ID: {}, 更新字段: {}", form.getId(), form);
+            logger.info("[用户信息更新申请] 开始处理更新申请，用户ID: {}, 更新字段: {}", userId, form);
             
-            R result = businessUserService.updateUser(form);
-            logger.info("[用户信息更新申请] 处理完成，用户ID: {}, 结果: {}", form.getId(), result.getMessage());
+            R result = businessUserService.updateUser(form, userId);
+            logger.info("[用户信息更新申请] 处理完成，用户ID: {}, 结果: {}", userId, result.getMessage());
             return result;
         } catch (Exception e) {
-            logger.error("[用户信息更新申请] 处理失败，用户ID: {}, 异常: {}", form.getId(), e.getMessage(), e);
+            logger.error("[用户信息更新申请] 处理失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);
             return R.error("申请失败：" + e.getMessage());
         }
     }

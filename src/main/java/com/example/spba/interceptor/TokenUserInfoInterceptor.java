@@ -70,6 +70,13 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         } catch (Exception e) {
             logger.error("拦截器处理异常: {}", e.getMessage(), e);
             UserContextUtil.clear();
+            
+            // 特殊处理Token过期情况
+            if (e.getMessage() != null && e.getMessage().startsWith("TOKEN_EXPIRED:")) {
+                String errorMessage = e.getMessage().substring("TOKEN_EXPIRED:".length());
+                return handleTokenExpiredError(response, errorMessage);
+            }
+            
             return handleTokenError(response, "系统内部错误");
         }
     }
@@ -180,6 +187,32 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         
         // 构造错误响应
         R errorResponse = R.error(501, errorMessage);
+        String jsonResponse = JSON.toJSONString(errorResponse);
+        
+        // 写入响应
+        response.getWriter().write(jsonResponse);
+        response.getWriter().flush();
+        
+        return false;
+    }
+    
+    /**
+     * 专门处理Token过期错误，返回友好的提示信息
+     * @param response HttpServletResponse响应对象
+     * @param errorMessage 错误信息
+     * @return false 表示拦截请求
+     */
+    private boolean handleTokenExpiredError(HttpServletResponse response, String errorMessage) throws Exception {
+        // 清理上下文避免污染
+        UserContextUtil.clear();
+        RequestAttributeUtil.clear();
+        
+        // 设置响应头
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        
+        // 构造Token过期的友好提示响应
+        R errorResponse = R.error(666, "登录已过期，请重新登录");
         String jsonResponse = JSON.toJSONString(errorResponse);
         
         // 写入响应

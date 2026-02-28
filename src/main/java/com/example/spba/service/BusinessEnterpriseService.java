@@ -3,9 +3,12 @@ package com.example.spba.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.spba.domain.dto.BusinessEnterpriseDTO;
 import com.example.spba.domain.dto.BusinessEnterpriseUpdateDTO;
+import com.example.spba.domain.dto.EnterpriseUserQueryDTO;
 import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.domain.entity.BusinessEnterpriseApply;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
+import com.example.spba.domain.entity.BusinessUser;
+import com.example.spba.domain.entity.BusinessUserApply;
 import com.example.spba.utils.R;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -67,9 +70,18 @@ public interface BusinessEnterpriseService {
     R updateApply(BusinessEnterpriseUpdateDTO form, String userId);
     
     /**
-     * 根据企业ID查询该企业下的所有用户信息
+     * 根据企业ID查询该企业下的所有用户信息申请（带筛选条件）
      * @param enterpriseId 企业ID
-     * @return 用户信息列表
+     * @param query 筛选条件
+     * @return 用户信息申请列表
      */
-    List<EnterpriseUserResponseDTO> getEnterpriseUsers(String enterpriseId);
+    List<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query);
+    
+    /**
+     * 根据企业ID查询该企业下的所有正式用户信息（带筛选条件）
+     * @param enterpriseId 企业ID
+     * @param query 筛选条件
+     * @return 正式用户信息列表
+     */
+    List<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query);
 }

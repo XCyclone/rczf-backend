@@ -60,7 +60,7 @@ public class BusinessEnterpriseDTO {
 
     /** 登录密码 */
     @NotBlank(message = "请输入登录密码", groups = Save.class)
-    @Size(min = 6, max = 18, message = "密码长度必须在6-18位之间", groups = Save.class)
+//    @Size(min = 6, max = 18, message = "密码长度必须在6-18位之间", groups = Save.class)
     private String loginPwd;
 
     private List<String> tags;

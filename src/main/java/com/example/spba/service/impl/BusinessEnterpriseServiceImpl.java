@@ -6,6 +6,7 @@ import com.example.spba.constant.ProjectConstants;
 import com.example.spba.dao.*;
 import com.example.spba.domain.dto.BusinessEnterpriseDTO;
 import com.example.spba.domain.dto.BusinessEnterpriseUpdateDTO;
+import com.example.spba.domain.dto.EnterpriseUserQueryDTO;
 import com.example.spba.domain.dto.EnterpriseUserResponseDTO;
 import com.example.spba.domain.entity.*;
 import com.example.spba.service.BusinessEnterpriseService;
@@ -39,6 +40,9 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
 
     @Autowired
     private BusinessUserApplyMapper businessUserApplyMapper;
+    
+    @Autowired
+    private BusinessUserMapper businessUserMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -382,6 +386,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 查询企业标签信息
         QueryWrapper<BusinessEnterpriseTag> tagWrapper = new QueryWrapper<>();
         tagWrapper.eq("enterprise_id", enterpriseId);
+        tagWrapper.eq("status", 1);
         List<BusinessEnterpriseTag> tags = businessEnterpriseTagMapper.selectList(tagWrapper);
         
         // 处理标签信息，只返回id、tag、title字段，不返回文件
@@ -398,6 +403,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 查询企业办公地址信息
         QueryWrapper<BusinessEnterpriseAddress> addressWrapper = new QueryWrapper<>();
         addressWrapper.eq("enterprise_id", enterpriseId);
+        addressWrapper.eq("status", 1);
         List<BusinessEnterpriseAddress> addresses = businessEnterpriseAddressMapper.selectList(addressWrapper);
         
         // 处理办公地址信息
@@ -425,11 +431,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             return R.error("原密码不正确");
         }
         
-        // 验证新密码强度（简单验证）
-        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 18) {
-            return R.error("新密码长度应在6-18位之间");
-        }
-        
+
         // 对新密码进行MD5加密
         String encryptedNewPassword = DigestUtils.md5DigestAsHex(newPassword.getBytes());
         
@@ -559,6 +561,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
 
         for(String officeAddress : form.getOfficeAddress()){
             BusinessEnterpriseAddress address = new BusinessEnterpriseAddress();
+            address.setId(UUID.randomUUID().toString().replace("-", ""));
             address.setEnterpriseId(userId);
             address.setOfficeAddress(officeAddress);
             address.setApplicationId(applyId);
@@ -572,7 +575,6 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             tagWrapper.eq("id",  tag);
             tagEntity.setApplicationId(applyId);
             tagEntity.setEnterpriseId(userId);
-            tagEntity.setTag(tag);
             businessEnterpriseTagMapper.update(tagEntity, tagWrapper);
         }
         
@@ -588,46 +590,93 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
     }
     
     @Override
-    public List<EnterpriseUserResponseDTO> getEnterpriseUsers(String enterpriseId) {
+    public List<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query) {
         // 首先验证企业是否存在
         BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
         if (enterprise == null) {
             throw new IllegalArgumentException("企业不存在");
         }
         
-        // 查询该企业下的所有用户申请记录（全量数据）
+        // 构建查询条件
         QueryWrapper<BusinessUserApply> wrapper = new QueryWrapper<>();
         wrapper.eq("company_id", enterpriseId);
-        // 不过滤状态和操作类型，返回所有记录
+        
+        // 添加筛选条件
+        if (query != null) {
+            if (query.getName() != null && !query.getName().trim().isEmpty()) {
+                wrapper.like("name", query.getName().trim());
+            }
+            if (query.getGender() != null) {
+                wrapper.eq("gender", query.getGender());
+            }
+            if (query.getNationality() != null && !query.getNationality().trim().isEmpty()) {
+                wrapper.eq("nationality", query.getNationality().trim());
+            }
+        }
+        
+        // 按注册日期和注册时间降序排序
+        wrapper.orderByDesc("create_time");
         
         List<BusinessUserApply> userApplies = businessUserApplyMapper.selectList(wrapper);
         
-        // 转换为返回格式（不包含密码字段）
-        List<EnterpriseUserResponseDTO> userList = new ArrayList<>();
-        for (BusinessUserApply apply : userApplies) {
-            EnterpriseUserResponseDTO userInfo = new EnterpriseUserResponseDTO();
-            userInfo.setUser_id(apply.getBusinessUserId());
-            userInfo.setName(apply.getName());
-            userInfo.setGender(apply.getGender());
-            userInfo.setId_type(apply.getIdType());
-            userInfo.setId_number(apply.getIdNumber());
-            userInfo.setMobile(apply.getMobile());
-            userInfo.setBirth_date(apply.getBirthDate());
-            userInfo.setHighest_edu(apply.getHighestEdu());
-            userInfo.setNationality(apply.getNationality());
-            userInfo.setReg_type(apply.getRegType());
-            userInfo.setCompany_id(apply.getCompanyId());
-            userInfo.setCompany_name(apply.getCompanyName());
-            userInfo.setReg_date(apply.getRegDate());
-            userInfo.setReg_time(apply.getRegTime());
-            userInfo.setStatus(apply.getStatus());
-            userInfo.setOperation(apply.getOperation());
-            userInfo.setInfo(apply.getInfo());
-            userInfo.setCreate_time(apply.getCreateTime());
-            userInfo.setUpdate_time(apply.getUpdateTime());
-            userList.add(userInfo);
+//        // 转换为返回格式（不包含密码字段）
+//        List<EnterpriseUserResponseDTO> userList = new ArrayList<>();
+//        for (BusinessUserApply apply : userApplies) {
+//            EnterpriseUserResponseDTO userInfo = new EnterpriseUserResponseDTO();
+//            userInfo.setUser_id(apply.getBusinessUserId());
+//            userInfo.setName(apply.getName());
+//            userInfo.setGender(apply.getGender());
+//            userInfo.setId_type(apply.getIdType());
+//            userInfo.setId_number(apply.getIdNumber());
+//            userInfo.setMobile(apply.getMobile());
+//            userInfo.setBirth_date(apply.getBirthDate());
+//            userInfo.setHighest_edu(apply.getHighestEdu());
+//            userInfo.setNationality(apply.getNationality());
+//            userInfo.setReg_type(apply.getRegType());
+//            userInfo.setCompany_id(apply.getCompanyId());
+//            userInfo.setCompany_name(apply.getCompanyName());
+//            userInfo.setReg_date(apply.getRegDate());
+//            userInfo.setReg_time(apply.getRegTime());
+//            userInfo.setStatus(apply.getStatus());
+//            userInfo.setOperation(apply.getOperation());
+//            userInfo.setInfo(apply.getInfo());
+//            userInfo.setCreate_time(apply.getCreateTime());
+//            userInfo.setUpdate_time(apply.getUpdateTime());
+//            userList.add(userInfo);
+//        }
+        
+        return userApplies;
+    }
+    
+    @Override
+    public List<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query) {
+        // 首先验证企业是否存在
+        BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
+        if (enterprise == null) {
+            throw new IllegalArgumentException("企业不存在");
         }
         
-        return userList;
+        // 构建查询条件
+        QueryWrapper<BusinessUser> wrapper = new QueryWrapper<>();
+        wrapper.eq("company_id", enterpriseId);
+        
+        // 添加筛选条件
+        if (query != null) {
+            if (query.getName() != null && !query.getName().trim().isEmpty()) {
+                wrapper.like("name", query.getName().trim());
+            }
+            if (query.getGender() != null) {
+                wrapper.eq("gender", query.getGender());
+            }
+            if (query.getNationality() != null && !query.getNationality().trim().isEmpty()) {
+                wrapper.eq("nationality", query.getNationality().trim());
+            }
+        }
+        
+        // 按注册日期和注册时间降序排序
+        wrapper.orderByDesc("reg_date", "reg_time");
+        
+        return businessUserMapper.selectList(wrapper);
     }
+
 }

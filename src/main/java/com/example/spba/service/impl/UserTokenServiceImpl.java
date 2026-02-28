@@ -44,7 +44,7 @@ public class UserTokenServiceImpl implements UserTokenService {
     public UserInfo getUserInfoByToken(String token) throws RuntimeException {
         // 验证token有效性
         if (!isValidToken(token)) {
-            throw new RuntimeException("Token无效或已过期");
+            throw new RuntimeException("TOKEN_EXPIRED:Token已过期");
         }
 
         // 从Sa-Token中获取用户ID
@@ -54,6 +54,10 @@ public class UserTokenServiceImpl implements UserTokenService {
             StpUtil.checkLogin();
             userId = StpUtil.getLoginIdAsString();
         } catch (Exception e) {
+            // 检查是否是因为token过期导致的异常
+            if (e.getMessage() != null && e.getMessage().contains("72aa1cdf-e189-4022-9ad5-ab4bf002b7ac")) {
+                throw new RuntimeException("TOKEN_EXPIRED:Token已过期:" + e.getMessage());
+            }
             throw new RuntimeException("无法从token获取用户信息: " + e.getMessage());
         }
 

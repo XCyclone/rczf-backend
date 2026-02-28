@@ -55,6 +55,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String name = null;
 
         HashMap info = this.baseMapper.getInfo(params);
+        if (info == null || info.get("status").equals(0)) {
+            result.put("message", "账号或密码错误");
+            return result;
+        }
         if (params.get("type").equals(1)){
             BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectById(info.get("id").toString());
             if(businessEnterprise == null){
@@ -88,10 +92,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 name = businessUser.getName();
             }
         }
-        if (info == null || info.get("status").equals(0)) {
-            result.put("message", "登录失败");
-            return result;
-        }
+
         if (!DigestUtils.md5DigestAsHex((params.get("password") + info.get("safe").toString()).getBytes()).equals(info.get("password"))) {
             result.put("message", "密码错误");
             return result;

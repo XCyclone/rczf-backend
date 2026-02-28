@@ -135,10 +135,16 @@ public class BusinessUserServiceImpl implements BusinessUserService
     {
         logger.info("[用户注册审批] 开始审批用户注册申请，申请ID: {}, 审批人ID: {}, 审批结果: {}, 审批意见: {}", 
                    applyId, userId, approveStatus ? "通过" : "拒绝", info);
+
         // 1. 查询申请记录
-        BusinessUserApply apply = businessUserApplyMapper.selectById(applyId);
+        QueryWrapper applyWrapper = new QueryWrapper<>();
+        applyWrapper.eq("id", applyId);
+        applyWrapper.eq("operation", 1);
+        applyWrapper.eq("status", 0);
+
+        BusinessUserApply apply = businessUserApplyMapper.selectOne(applyWrapper);
         if (apply == null) {
-            throw new IllegalArgumentException("申请记录不存在");
+            throw new IllegalArgumentException("申请记录不存在或该申请记录状态有误");
         }
         if (!userId.equals(apply.getCompanyId())){
             throw new IllegalArgumentException("您没有权限审批该申请");
@@ -370,11 +376,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
         if (!user.getPassword().equals(encryptedOldPassword)) {
             return R.error("原密码不正确");
         }
-        
-        // 验证新密码强度（简单验证）
-        if (newPassword == null || newPassword.length() < 6 || newPassword.length() > 18) {
-            return R.error("新密码长度应在6-18位之间");
-        }
+
         
         // 对新密码进行MD5加密
         String encryptedNewPassword = DigestUtils.md5DigestAsHex(newPassword.getBytes());
@@ -393,7 +395,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
             try {
                 // 查找关联的用户账号（通常使用手机号作为用户名）
                 QueryWrapper<User> userWrapper = new QueryWrapper<>();
-                userWrapper.eq("username", user.getMobile());
+                userWrapper.eq("username", user.getIdNumber());
                 User linkedUser = userService.getOne(userWrapper);
                 
                 if (linkedUser != null) {
@@ -413,16 +415,16 @@ public class BusinessUserServiceImpl implements BusinessUserService
     }
 
     @Override
-    public R updateUser(BusinessUserUpdateDTO form) {
+    public R updateUser(BusinessUserUpdateDTO form, String userId) {
         // 检查用户是否存在
-        BusinessUser existingUser = businessUserMapper.selectById(form.getId());
+        BusinessUser existingUser = businessUserMapper.selectById(userId);
         if (existingUser == null) {
             return R.error("用户不存在");
         }
 
         // 检查是否有待审批的修改申请
         QueryWrapper<BusinessUserApply> pendingWrapper = new QueryWrapper<>();
-        pendingWrapper.eq("business_user_id", form.getId())
+        pendingWrapper.eq("business_user_id", userId)
                      .eq("status", 0)  // 0-提交/待审核
                      .eq("operation", 2); // 2-修改信息
         
@@ -449,7 +451,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
         // 生成申请ID
         String applyId = UUID.randomUUID().toString().replace("-", "");
         apply.setId(applyId);
-        apply.setBusinessUserId(form.getId());
+        apply.setBusinessUserId(userId);
         
         // 复制要修改的信息（只包含现在支持的字段）
         apply.setHighestEdu(form.getHighestEdu());
@@ -482,37 +484,37 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approveUpdate(String businessUserId, boolean approveStatus, String info) {
-        // 1. 查询业务用户
-        BusinessUser user = businessUserMapper.selectById(businessUserId);
-        if (user == null) {
-            throw new IllegalArgumentException("业务用户不存在");
+    public void approveUpdate(String applyId, boolean approveStatus, String info, String userId) {
+        // 1. 查询申请记录
+        QueryWrapper applyWrapper = new QueryWrapper<>();
+        applyWrapper.eq("id", applyId);
+        applyWrapper.eq("operation", 2);
+        applyWrapper.eq("status", 0);
+
+        BusinessUserApply apply = businessUserApplyMapper.selectOne(applyWrapper);
+        if (apply == null) {
+            throw new IllegalArgumentException("申请记录不存在或该申请记录状态有误");
+        }
+        if (!userId.equals(apply.getCompanyId())){
+            throw new IllegalArgumentException("您没有权限审批该申请");
         }
 
-        // 2. 获取最新的信息修改申请记录（状态为0-待审核，操作类型为2-修改信息）
-        QueryWrapper<BusinessUserApply> applyWrapper = new QueryWrapper<>();
-        applyWrapper.eq("business_user_id", businessUserId)
-                   .eq("status", 0)  // 0-提交/待审核
-                   .eq("operation", 2) // 2-修改信息
-                   .orderByDesc("id"); // 获取最新的申请记录
-                
-        BusinessUserApply latestApply = businessUserApplyMapper.selectOne(applyWrapper);
-
-        if (latestApply == null) {
+        if (apply == null) {
             throw new IllegalArgumentException("未找到信息修改申请记录");
         }
 
         if (approveStatus) {
             // 审批通过：更新用户信息
             BusinessUser updatedUser = new BusinessUser();
-            updatedUser.setId(businessUserId);
+            updatedUser.setId(apply.getBusinessUserId());
             
             // 只更新现在支持的字段
-            updatedUser.setHighestEdu(latestApply.getHighestEdu());
-            updatedUser.setNationality(latestApply.getNationality());
-            updatedUser.setCompanyName(latestApply.getCompanyName());
-            updatedUser.setRegType(latestApply.getRegType());
-            
+            updatedUser.setHighestEdu(apply.getHighestEdu());
+            updatedUser.setNationality(apply.getNationality());
+            updatedUser.setCompanyName(apply.getCompanyName());
+            updatedUser.setRegType(apply.getRegType());
+
+            BusinessUser user = businessUserMapper.selectById(apply.getBusinessUserId());
             // 保持原有信息
             updatedUser.setName(user.getName());
             updatedUser.setGender(user.getGender());
@@ -529,15 +531,15 @@ public class BusinessUserServiceImpl implements BusinessUserService
 
             // 更新业务用户信息
             QueryWrapper<BusinessUser> wrapper = new QueryWrapper<>();
-            wrapper.eq("id", businessUserId);
+            wrapper.eq("id", user.getId());
             businessUserMapper.update(updatedUser, wrapper);
 
             // 更新申请状态为通过
-            updateApplyStatus(latestApply.getId(), 1, info); // 1-审核通过
+            updateApplyStatus(apply.getId(), 1, info); // 1-审核通过
         } else {
             // 审批拒绝
             // 更新申请状态为拒绝
-            updateApplyStatus(latestApply.getId(), 2, info); // 2-审核拒绝
+            updateApplyStatus(apply.getId(), 2, info); // 2-审核拒绝
         }
     }
 

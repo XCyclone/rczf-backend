@@ -13,7 +13,7 @@ public class BusinessUserUpdateApproveDTO
 
     /** 业务用户ID */
     @NotBlank(message = "业务用户ID不能为空", groups = Approve.class)
-    private String businessUserId;
+    private String applyId;
     
     /** 审批状态：true-通过，false-拒绝 */
     @NotNull(message = "审批状态不能为空", groups = Approve.class)

@@ -65,15 +65,15 @@ public interface BusinessUserService
      * @param form 用户信息更新申请表单
      * @return 申请结果
      */
-    R updateUser(BusinessUserUpdateDTO form);
+    R updateUser(BusinessUserUpdateDTO form, String userId);
     
     /**
      * 审批用户信息更新申请
-     * @param businessUserId 业务用户ID
+     * @param applyId 申请id
      * @param approveStatus 审批状态：true-通过，false-拒绝
      * @param info 审批附言
      */
-    void approveUpdate(String businessUserId, boolean approveStatus, String info);
+    void approveUpdate(String applyId, boolean approveStatus, String info, String userId);
 
 
     R delUser(String userId);

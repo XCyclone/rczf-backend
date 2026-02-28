@@ -14,10 +14,6 @@ public class BusinessUserUpdateDTO
     /** 保存时的校验分组 */
     public interface Save{}
 
-    /** 用户ID */
-    @NotBlank(message = "用户ID不能为空", groups = Save.class)
-    private String id;
-
     /** 最高学历 */
     @Size(max = 64, message = "最高学历长度不能超过64个字符")
     private String highestEdu;
