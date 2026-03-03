@@ -22,6 +22,11 @@ public class ProjectInfo implements Serializable {
     private String id;
 
     /**
+     * 项目类型:1-产业人才项目；2-领军优青项目；3-机关单位项目
+     */
+    private Integer projectType;
+
+    /**
      * 项目编号
      */
     private String projectCode;
@@ -57,14 +62,44 @@ public class ProjectInfo implements Serializable {
     private Integer approvalCount;
 
     /**
-     * 申请开始时间
+     * 企业申请开始时间
+     */
+    private String enterpriseStartTime;
+
+    /**
+     * 企业申请截止时间
+     */
+    private String enterpriseEndTime;
+
+    /**
+     * 企业属地和产促中心审核配额天数
+     */
+    private Integer enterpriseQuotaDays;
+
+    /**
+     * 属地和产促配额审核开始时间
+     */
+    private String quotaStartTime;
+
+    /**
+     * 属地和产促配额审核结束时间
+     */
+    private String quotaEndTime;
+
+    /**
+     * 个人申请开始时间
      */
     private String applyStartTime;
 
     /**
-     * 申请截止时间
+     * 个人申请截止时间
      */
     private String applyEndTime;
+
+    /**
+     * 申请审核结束时间
+     */
+    private String auditEndTime;
 
     /**
      * 选房开始时间
@@ -72,9 +107,14 @@ public class ProjectInfo implements Serializable {
     private String selectStartTime;
 
     /**
+     * 补选开始时间
+     */
+    private String bselectStartTime;
+
+    /**
      * 补选截止时间
      */
-    private String selectEndTime;
+    private String bselectEndTime;
 
     /**
      * 项目关闭时间
@@ -95,6 +135,11 @@ public class ProjectInfo implements Serializable {
      * 最后更新人
      */
     private String lastUpdater;
+
+    /**
+     * 项目是否已完成选房排序：1-未完成；2-已完成
+     */
+    private Integer sort;
 
     /**
      * 项目状态：1-开启；2-关闭

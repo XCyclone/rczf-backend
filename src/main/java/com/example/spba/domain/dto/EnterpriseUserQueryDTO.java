@@ -12,5 +12,11 @@ public class EnterpriseUserQueryDTO {
     
     /** 民族 */
     private String nationality;
+    
+    /** 当前页码，默认第1页 */
+    private Integer page = 1;
+    
+    /** 每页大小，默认10条 */
+    private Integer size = 10;
 
 }

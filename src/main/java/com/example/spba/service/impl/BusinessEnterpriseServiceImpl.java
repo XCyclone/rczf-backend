@@ -1,6 +1,8 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.spba.constant.ProjectConstants;
 import com.example.spba.dao.*;
@@ -216,7 +218,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             businessEnterpriseTagMapper.updateById(tagInfo);
         }
 
-        return R.success("企业注册申请已提交，请等待审核", applyId);
+        return R.success("您的注册申请已发送属地，请等待审核。", applyId);
     }
 
     @Override
@@ -590,12 +592,19 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
     }
     
     @Override
-    public List<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query) {
+    public IPage<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query) {
         // 首先验证企业是否存在
         BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
         if (enterprise == null) {
             throw new IllegalArgumentException("企业不存在");
         }
+        
+        // 设置默认分页参数
+        int currentPage = (query != null && query.getPage() != null && query.getPage() > 0) ? query.getPage() : 1;
+        int pageSize = (query != null && query.getSize() != null && query.getSize() > 0) ? query.getSize() : 10;
+        
+        // 构建分页对象
+        Page<BusinessUserApply> page = new Page<>(currentPage, pageSize);
         
         // 构建查询条件
         QueryWrapper<BusinessUserApply> wrapper = new QueryWrapper<>();
@@ -606,7 +615,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             if (query.getName() != null && !query.getName().trim().isEmpty()) {
                 wrapper.like("name", query.getName().trim());
             }
-            if (query.getGender() != null) {
+            if (query.getGender() != null && query.getGender() != 0) {
                 wrapper.eq("gender", query.getGender());
             }
             if (query.getNationality() != null && !query.getNationality().trim().isEmpty()) {
@@ -617,44 +626,24 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 按注册日期和注册时间降序排序
         wrapper.orderByDesc("create_time");
         
-        List<BusinessUserApply> userApplies = businessUserApplyMapper.selectList(wrapper);
-        
-//        // 转换为返回格式（不包含密码字段）
-//        List<EnterpriseUserResponseDTO> userList = new ArrayList<>();
-//        for (BusinessUserApply apply : userApplies) {
-//            EnterpriseUserResponseDTO userInfo = new EnterpriseUserResponseDTO();
-//            userInfo.setUser_id(apply.getBusinessUserId());
-//            userInfo.setName(apply.getName());
-//            userInfo.setGender(apply.getGender());
-//            userInfo.setId_type(apply.getIdType());
-//            userInfo.setId_number(apply.getIdNumber());
-//            userInfo.setMobile(apply.getMobile());
-//            userInfo.setBirth_date(apply.getBirthDate());
-//            userInfo.setHighest_edu(apply.getHighestEdu());
-//            userInfo.setNationality(apply.getNationality());
-//            userInfo.setReg_type(apply.getRegType());
-//            userInfo.setCompany_id(apply.getCompanyId());
-//            userInfo.setCompany_name(apply.getCompanyName());
-//            userInfo.setReg_date(apply.getRegDate());
-//            userInfo.setReg_time(apply.getRegTime());
-//            userInfo.setStatus(apply.getStatus());
-//            userInfo.setOperation(apply.getOperation());
-//            userInfo.setInfo(apply.getInfo());
-//            userInfo.setCreate_time(apply.getCreateTime());
-//            userInfo.setUpdate_time(apply.getUpdateTime());
-//            userList.add(userInfo);
-//        }
-        
-        return userApplies;
+        // 执行分页查询
+        return businessUserApplyMapper.selectPage(page, wrapper);
     }
     
     @Override
-    public List<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query) {
+    public IPage<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query) {
         // 首先验证企业是否存在
         BusinessEnterprise enterprise = businessEnterpriseMapper.selectById(enterpriseId);
         if (enterprise == null) {
             throw new IllegalArgumentException("企业不存在");
         }
+        
+        // 设置默认分页参数
+        int currentPage = (query != null && query.getPage() != null && query.getPage() > 0) ? query.getPage() : 1;
+        int pageSize = (query != null && query.getSize() != null && query.getSize() > 0) ? query.getSize() : 10;
+        
+        // 构建分页对象
+        Page<BusinessUser> page = new Page<>(currentPage, pageSize);
         
         // 构建查询条件
         QueryWrapper<BusinessUser> wrapper = new QueryWrapper<>();
@@ -665,7 +654,7 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
             if (query.getName() != null && !query.getName().trim().isEmpty()) {
                 wrapper.like("name", query.getName().trim());
             }
-            if (query.getGender() != null) {
+            if (query.getGender() != null && query.getGender() != 0) {
                 wrapper.eq("gender", query.getGender());
             }
             if (query.getNationality() != null && !query.getNationality().trim().isEmpty()) {
@@ -676,7 +665,8 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         // 按注册日期和注册时间降序排序
         wrapper.orderByDesc("reg_date", "reg_time");
         
-        return businessUserMapper.selectList(wrapper);
+        // 执行分页查询
+        return businessUserMapper.selectPage(page, wrapper);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.example.spba.service;
 
+import com.example.spba.domain.dto.EnterpriseApplicationQueryDTO;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.utils.R;
@@ -12,6 +13,8 @@ public interface EnterpriseApplyService {
     R submitApplication(EnterpriseSubmitDTO submitDTO, String userId, String userName);
 
     R queryViewApplications();
+    
+    R queryViewApplicationsWithPage(EnterpriseApplicationQueryDTO queryDTO);
     
     R withdrawApplication(String applicationId, String userId);
     

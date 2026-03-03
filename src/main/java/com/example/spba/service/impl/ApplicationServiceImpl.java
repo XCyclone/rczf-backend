@@ -1,5 +1,8 @@
 package com.example.spba.service.impl;
 
+import com.example.spba.domain.entity.ApplicationAgencyTalent;
+import com.example.spba.domain.entity.ApplicationIndustryTalent;
+import com.example.spba.domain.entity.ApplicationLeadingTalent;
 import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.service.ApplicationIndustryService;
 import com.example.spba.service.ApplicationLeadingService;
@@ -11,7 +14,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 统一申请服务实现类
@@ -40,22 +45,34 @@ public class ApplicationServiceImpl implements ApplicationService {
             // 2. 合并所有申请记录
             List<Object> allApplications = new ArrayList<>();
             
-            // 添加机关单位申请记录
+            // 添加机关单位申请记录 (applyType=0)
             if (agencyResult.getCode() == 0 && agencyResult.getData() != null) {
                 List<?> agencyApplications = (List<?>) agencyResult.getData();
-                allApplications.addAll(agencyApplications);
+                for (Object app : agencyApplications) {
+                    Map<String, Object> appMap = convertToMap(app);
+                    appMap.put("applyType", "2"); // 机关单位用房申请
+                    allApplications.add(appMap);
+                }
             }
             
-            // 添加产业人才申请记录
+            // 添加产业人才申请记录 (applyType=2)
             if (industryResult.getCode() == 0 && industryResult.getData() != null) {
                 List<?> industryApplications = (List<?>) industryResult.getData();
-                allApplications.addAll(industryApplications);
+                for (Object app : industryApplications) {
+                    Map<String, Object> appMap = convertToMap(app);
+                    appMap.put("applyType", "1"); // 产业人才房申请
+                    allApplications.add(appMap);
+                }
             }
             
-            // 添加领军优青人才申请记录
+            // 添加领军优青人才申请记录 (applyType=1)
             if (leadingResult.getCode() == 0 && leadingResult.getData() != null) {
                 List<?> leadingApplications = (List<?>) leadingResult.getData();
-                allApplications.addAll(leadingApplications);
+                for (Object app : leadingApplications) {
+                    Map<String, Object> appMap = convertToMap(app);
+                    appMap.put("applyType", "3"); // 领军、优青人才房申请
+                    allApplications.add(appMap);
+                }
             }
             
             // 3. 按申请时间排序（倒序）
@@ -86,6 +103,72 @@ public class ApplicationServiceImpl implements ApplicationService {
         } catch (Exception e) {
             return R.error("查询用户申请记录失败：" + e.getMessage());
         }
+    }
+    
+    /**
+     * 将对象转换为 Map
+     */
+    private Map<String, Object> convertToMap(Object obj) {
+        Map<String, Object> map = new HashMap<>();
+        if (obj instanceof ApplicationAgencyTalent) {
+            ApplicationAgencyTalent talent = (ApplicationAgencyTalent) obj;
+            map.put("applicationId", talent.getApplicationId());
+            map.put("projectId", talent.getProjectId());
+            map.put("projectName", talent.getProjectName());
+            map.put("communityId1", talent.getCommunityId1());
+            map.put("communityId2", talent.getCommunityId2());
+            map.put("communityId3", talent.getCommunityId3());
+            map.put("houseType1", talent.getHouseType1());
+            map.put("houseType2", talent.getHouseType2());
+            map.put("houseType3", talent.getHouseType3());
+            map.put("houseType4", talent.getHouseType4());
+            map.put("applyDate", talent.getApplyDate());
+            map.put("applyTime", talent.getApplyTime());
+            map.put("applicantId", talent.getApplicantId());
+            map.put("applicantName", talent.getApplicantName());
+            map.put("applyStatus", talent.getApplyStatus());
+            map.put("applySort", talent.getApplySort());
+            map.put("currentSort", talent.getCurrentSort());
+        } else if (obj instanceof ApplicationIndustryTalent) {
+            ApplicationIndustryTalent talent = (ApplicationIndustryTalent) obj;
+            map.put("applicationId", talent.getApplicationId());
+            map.put("projectId", talent.getProjectId());
+            map.put("projectName", talent.getProjectName());
+            map.put("communityId1", talent.getCommunityId1());
+            map.put("communityId2", talent.getCommunityId2());
+            map.put("communityId3", talent.getCommunityId3());
+            map.put("houseType1", talent.getHouseType1());
+            map.put("houseType2", talent.getHouseType2());
+            map.put("houseType3", talent.getHouseType3());
+            map.put("houseType4", talent.getHouseType4());
+            map.put("applyDate", talent.getApplyDate());
+            map.put("applyTime", talent.getApplyTime());
+            map.put("applicantId", talent.getApplicantId());
+            map.put("applicantName", talent.getApplicantName());
+            map.put("applyStatus", talent.getApplyStatus());
+            map.put("applySort", talent.getApplySort());
+            map.put("currentSort", talent.getCurrentSort());
+        } else if (obj instanceof ApplicationLeadingTalent) {
+            ApplicationLeadingTalent talent = (ApplicationLeadingTalent) obj;
+            map.put("applicationId", talent.getApplicationId());
+            map.put("projectId", talent.getProjectId());
+            map.put("projectName", talent.getProjectName());
+            map.put("communityId1", talent.getCommunityId1());
+            map.put("communityId2", talent.getCommunityId2());
+            map.put("communityId3", talent.getCommunityId3());
+            map.put("houseType1", talent.getHouseType1());
+            map.put("houseType2", talent.getHouseType2());
+            map.put("houseType3", talent.getHouseType3());
+            map.put("houseType4", talent.getHouseType4());
+            map.put("applyDate", talent.getApplyDate());
+            map.put("applyTime", talent.getApplyTime());
+            map.put("applicantId", talent.getApplicantId());
+            map.put("applicantName", talent.getApplicantName());
+            map.put("applyStatus", talent.getApplyStatus());
+            map.put("applySort", talent.getApplySort());
+            map.put("currentSort", talent.getCurrentSort());
+        }
+        return map;
     }
     
     /**

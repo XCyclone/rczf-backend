@@ -6,10 +6,8 @@ import com.example.spba.domain.dto.IndustryApplySubmitDTO;
 import com.example.spba.domain.dto.IndustryApplyUpdateDTO;
 import com.example.spba.domain.dto.LeadingApplySubmitDTO;
 import com.example.spba.domain.dto.LeadingApplyUpdateDTO;
-import com.example.spba.service.ApplicationAgencyService;
-import com.example.spba.service.ApplicationIndustryService;
-import com.example.spba.service.ApplicationLeadingService;
-import com.example.spba.service.ApplicationService;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
+import com.example.spba.service.*;
 import com.example.spba.service.impl.BusinessUserServiceImpl;
 import com.example.spba.utils.R;
 import org.slf4j.Logger;
@@ -40,7 +38,34 @@ public class UserApplyController {
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private PublicService publicService;
+
     private static final Logger logger = LoggerFactory.getLogger(UserApplyController.class);
+
+    /**
+     * 查询项目信息-员工用户
+     * @return 项目信息列表
+     */
+    @PostMapping("/query/project")
+    public R queryUserProject() {
+        logger.info("[查询项目信息] 调用公共服务查询项目信息");
+        return publicService.queryUserProject();
+    }
+
+    /**
+     * 查询项目下的小区信息
+     * @param param 包含项目ID的参数
+     * @return 该项目关联的小区ID和名称列表
+     */
+    @PostMapping("/query/community")
+    public R queryCommunitiesByProject(@RequestBody Map<String, String> param) {
+        String projectId = param.get("projectId");
+        logger.info("[查询项目小区] 调用公共服务查询项目小区信息，项目ID: {}", projectId);
+
+        return publicService.queryCommunitiesByProject(projectId);
+    }
+
 
     /**
      * 机关单位申请提交接口
@@ -164,30 +189,75 @@ public class UserApplyController {
     }
     
     /**
-     * 查询机关单位员工的所有申请记录
+     * 查询机关单位员工的所有申请记录（支持分页）
+     * @param queryDTO 分页查询参数（可选）
      * @return 申请记录列表
      */
     @PostMapping("/agency/query")
-    public R queryAgencyApplications(@RequestAttribute(CURRENT_USER_ID) String userId) {
-        return applicationAgencyService.queryAgencyApplications(userId);
+    public R queryAgencyApplications(@RequestAttribute(CURRENT_USER_ID) String userId,
+                                    @RequestBody(required = false) UserApplicationQueryDTO queryDTO) {
+        try {
+            logger.info("[机关单位申请查询] 用户ID: {}, 查询参数: {}", userId, queryDTO);
+            
+            // 如果查询参数为空，调用原有的不分页查询方法
+            if (queryDTO == null) {
+                return applicationAgencyService.queryAgencyApplications(userId);
+            } else {
+                // 调用分页查询方法
+                return applicationAgencyService.queryAgencyApplicationsWithPage(userId, queryDTO);
+            }
+        } catch (Exception e) {
+            logger.error("[机关单位申请查询] 查询失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);
+            return R.error("查询失败: " + e.getMessage());
+        }
     }
     
     /**
-     * 查询产业人才的所有申请记录
+     * 查询产业人才的所有申请记录（支持分页）
+     * @param queryDTO 分页查询参数（可选）
      * @return 申请记录列表
      */
     @PostMapping("/industry/query")
-    public R queryIndustryApplications(@RequestAttribute(CURRENT_USER_ID) String userId) {
-        return applicationIndustryService.queryIndustryApplications(userId);
+    public R queryIndustryApplications(@RequestAttribute(CURRENT_USER_ID) String userId,
+                                      @RequestBody(required = false) UserApplicationQueryDTO queryDTO) {
+        try {
+            logger.info("[产业人才申请查询] 用户ID: {}, 查询参数: {}", userId, queryDTO);
+            
+            // 如果查询参数为空，调用原有的不分页查询方法
+            if (queryDTO == null) {
+                return applicationIndustryService.queryIndustryApplications(userId);
+            } else {
+                // 调用分页查询方法
+                return applicationIndustryService.queryIndustryApplicationsWithPage(userId, queryDTO);
+            }
+        } catch (Exception e) {
+            logger.error("[产业人才申请查询] 查询失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);
+            return R.error("查询失败: " + e.getMessage());
+        }
     }
     
     /**
-     * 查询领军优青人才的所有申请记录
+     * 查询领军优青人才的所有申请记录（支持分页）
+     * @param queryDTO 分页查询参数（可选）
      * @return 申请记录列表
      */
     @PostMapping("/leading/query")
-    public R queryLeadingApplications(@RequestAttribute(CURRENT_USER_ID) String userId) {
-        return applicationLeadingService.queryLeadingApplications(userId);
+    public R queryLeadingApplications(@RequestAttribute(CURRENT_USER_ID) String userId,
+                                     @RequestBody(required = false) UserApplicationQueryDTO queryDTO) {
+        try {
+            logger.info("[领军优青人才申请查询] 用户ID: {}, 查询参数: {}", userId, queryDTO);
+            
+            // 如果查询参数为空，调用原有的不分页查询方法
+            if (queryDTO == null) {
+                return applicationLeadingService.queryLeadingApplications(userId);
+            } else {
+                // 调用分页查询方法
+                return applicationLeadingService.queryLeadingApplicationsWithPage(userId, queryDTO);
+            }
+        } catch (Exception e) {
+            logger.error("[领军优青人才申请查询] 查询失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);
+            return R.error("查询失败: " + e.getMessage());
+        }
     }
     
     /**

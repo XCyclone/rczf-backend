@@ -1,16 +1,13 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.spba.dao.ApplicationIndustryTalentMapper;
-import com.example.spba.dao.BusinessEnterpriseMapper;
-import com.example.spba.dao.BusinessUserMapper;
-import com.example.spba.dao.ProjectInfoMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.spba.dao.*;
 import com.example.spba.domain.dto.IndustryApplySubmitDTO;
 import com.example.spba.domain.dto.IndustryApplyUpdateDTO;
-import com.example.spba.domain.entity.ApplicationIndustryTalent;
-import com.example.spba.domain.entity.BusinessEnterprise;
-import com.example.spba.domain.entity.BusinessUser;
-import com.example.spba.domain.entity.ProjectInfo;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.ApplicationIndustryService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
@@ -29,6 +26,9 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
 
     @Autowired
     private ApplicationIndustryTalentMapper applicationIndustryTalentMapper;
+
+    @Autowired
+    private ViewApplicationIndustryTalentMapper viewApplicationIndustryTalentMapper;
     
     @Autowired
     private BusinessUserMapper businessUserMapper;
@@ -372,16 +372,56 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 3. 查询该用户的所有产业人才申请记录
-            QueryWrapper<ApplicationIndustryTalent> wrapper = new QueryWrapper<>();
+            QueryWrapper<ViewApplicationIndustryTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationIndustryTalent> applications = applicationIndustryTalentMapper.selectList(wrapper);
+            List<ViewApplicationIndustryTalent> applications = viewApplicationIndustryTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             
         } catch (Exception e) {
             return R.error("查询产业人才申请记录失败：" + e.getMessage());
+        }
+    }
+    
+    @Override
+    public R queryIndustryApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO) {
+        try {
+            // 1. 校验用户是否存在
+            BusinessUser user = businessUserMapper.selectById(userId);
+            if (user == null) {
+                return R.error("用户信息不存在");
+            }
+            
+            // 2. 校验用户类型（必须是产业人才）
+            if (user.getRegType() == null || user.getRegType() != 3) {
+                return R.error("只有产业人才才能查询申请记录");
+            }
+            
+            // 3. 参数校验
+            if (queryDTO.getPageNum() == null || queryDTO.getPageNum() <= 0) {
+                queryDTO.setPageNum(1);
+            }
+            if (queryDTO.getPageSize() == null || queryDTO.getPageSize() <= 0) {
+                queryDTO.setPageSize(10);
+            }
+            
+            // 4. 构建分页对象
+            Page<ViewApplicationIndustryTalent> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+            
+            // 5. 构建查询条件
+            QueryWrapper<ViewApplicationIndustryTalent> wrapper = new QueryWrapper<>();
+            wrapper.eq("applicant_id", userId);
+            wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
+            
+            // 6. 执行分页查询
+            IPage<ViewApplicationIndustryTalent> resultPage = viewApplicationIndustryTalentMapper.selectPage(page, wrapper);
+            
+            return R.success(resultPage);
+            
+        } catch (Exception e) {
+            return R.error("分页查询产业人才申请记录失败：" + e.getMessage());
         }
     }
     
@@ -395,11 +435,11 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 2. 查询该用户的所有产业人才申请记录（不校验用户类型，查询所有记录）
-            QueryWrapper<ApplicationIndustryTalent> wrapper = new QueryWrapper<>();
+            QueryWrapper<ViewApplicationIndustryTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationIndustryTalent> applications = applicationIndustryTalentMapper.selectList(wrapper);
+            List<ViewApplicationIndustryTalent> applications = viewApplicationIndustryTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             

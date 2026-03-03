@@ -2,6 +2,7 @@ package com.example.spba.service;
 
 import com.example.spba.domain.dto.AgencyApplySubmitDTO;
 import com.example.spba.domain.dto.AgencyApplyUpdateDTO;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
 import com.example.spba.utils.R;
 
 public interface ApplicationAgencyService {
@@ -36,6 +37,14 @@ public interface ApplicationAgencyService {
      * @return 申请记录列表
      */
     R queryAgencyApplications(String userId);
+    
+    /**
+     * 分页查询机关单位员工的所有申请记录
+     * @param userId 用户ID
+     * @param queryDTO 分页查询参数
+     * @return 分页的申请记录列表
+     */
+    R queryAgencyApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO);
     
     /**
      * 查询用户的所有申请记录（统一查询接口）

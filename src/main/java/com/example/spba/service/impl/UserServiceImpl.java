@@ -54,21 +54,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         result.put("status", false);
         String name = null;
 
-        HashMap info = this.baseMapper.getInfo(params);
-        if (info == null || info.get("status").equals(0)) {
-            result.put("message", "账号或密码错误");
-            return result;
-        }
+        // 1、判断是否有申请
         if (params.get("type").equals(1)){
-            BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectById(info.get("id").toString());
+            QueryWrapper<BusinessEnterprise> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("uscc", params.get("username"));
+            BusinessEnterprise businessEnterprise = businessEnterpriseMapper.selectOne(queryWrapper);
             if(businessEnterprise == null){
-                QueryWrapper<BusinessEnterpriseApply> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("enterprise_id", info.get("id").toString());
-                if(businessEnterpriseApplyMapper.selectOne(queryWrapper) != null){
+                QueryWrapper<BusinessEnterpriseApply> queryWrapper2 = new QueryWrapper<>();
+                queryWrapper2.eq("uscc", params.get("username"));
+                if(businessEnterpriseApplyMapper.selectOne(queryWrapper2) != null){
                     result.put("message", "已申请，请等待审批");
                 }
                 else {
-                    result.put("message", "无此用户");
+                    result.put("message", "账号或密码错误");
                 }
                 return result;
             }
@@ -76,15 +74,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 name = businessEnterprise.getEnterpriseName();
             }
         }else {
-            BusinessUser businessUser = businessUserMapper.selectById(info.get("id").toString());
+            QueryWrapper<BusinessUser> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("id_number", params.get("username"));
+            BusinessUser businessUser = businessUserMapper.selectOne(queryWrapper);
             if(businessUser == null){
-                QueryWrapper<BusinessUserApply> queryWrapper = new QueryWrapper<>();
-                queryWrapper.eq("company_id", info.get("id").toString());
-                if(businessUserApplyMapper.selectOne(queryWrapper) != null){
+                QueryWrapper<BusinessUserApply> queryWrapper2 = new QueryWrapper<>();
+                queryWrapper2.eq("id_number", params.get("username"));
+                if(businessUserApplyMapper.selectOne(queryWrapper2) != null){
                     result.put("message", "已申请，请等待审批");
                 }
                 else {
-                    result.put("message", "无此用户");
+                    result.put("message", "账号或密码错误");
                 }
                 return result;
             }
@@ -92,6 +92,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 name = businessUser.getName();
             }
         }
+        HashMap info = this.baseMapper.getInfo(params);
+        if (info == null || info.get("status").equals(0)) {
+            result.put("message", "账号或密码错误");
+            return result;
+        }
+
 
         if (!DigestUtils.md5DigestAsHex((params.get("password") + info.get("safe").toString()).getBytes()).equals(info.get("password"))) {
             result.put("message", "密码错误");

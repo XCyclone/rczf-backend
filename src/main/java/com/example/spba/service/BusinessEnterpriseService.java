@@ -1,5 +1,6 @@
 package com.example.spba.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.spba.domain.dto.BusinessEnterpriseDTO;
 import com.example.spba.domain.dto.BusinessEnterpriseUpdateDTO;
@@ -70,18 +71,18 @@ public interface BusinessEnterpriseService {
     R updateApply(BusinessEnterpriseUpdateDTO form, String userId);
     
     /**
-     * 根据企业ID查询该企业下的所有用户信息申请（带筛选条件）
+     * 根据企业ID查询该企业下的所有用户信息申请（带筛选条件和分页）
      * @param enterpriseId 企业ID
-     * @param query 筛选条件
-     * @return 用户信息申请列表
+     * @param query 筛选条件和分页参数
+     * @return 用户信息申请分页列表
      */
-    List<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query);
+    IPage<BusinessUserApply> getEnterpriseUsersApply(String enterpriseId, EnterpriseUserQueryDTO query);
     
     /**
-     * 根据企业ID查询该企业下的所有正式用户信息（带筛选条件）
+     * 根据企业ID查询该企业下的所有正式用户信息（带筛选条件和分页）
      * @param enterpriseId 企业ID
-     * @param query 筛选条件
-     * @return 正式用户信息列表
+     * @param query 筛选条件和分页参数
+     * @return 正式用户信息分页列表
      */
-    List<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query);
+    IPage<BusinessUser> getEnterpriseUsers(String enterpriseId, EnterpriseUserQueryDTO query);
 }

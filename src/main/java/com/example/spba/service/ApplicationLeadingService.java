@@ -2,6 +2,7 @@ package com.example.spba.service;
 
 import com.example.spba.domain.dto.LeadingApplySubmitDTO;
 import com.example.spba.domain.dto.LeadingApplyUpdateDTO;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
 import com.example.spba.utils.R;
 
 public interface ApplicationLeadingService {
@@ -36,6 +37,14 @@ public interface ApplicationLeadingService {
      * @return 申请记录列表
      */
     R queryLeadingApplications(String userId);
+    
+    /**
+     * 分页查询领军优青人才的所有申请记录
+     * @param userId 用户ID
+     * @param queryDTO 分页查询参数
+     * @return 分页的申请记录列表
+     */
+    R queryLeadingApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO);
     
     /**
      * 查询用户的所有申请记录（统一查询接口）

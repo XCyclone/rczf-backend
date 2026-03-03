@@ -1,27 +1,13 @@
 package com.example.spba.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.example.spba.dao.InfoParametersMapper;
-import com.example.spba.dao.BusinessEnterpriseMapper;
-import com.example.spba.dao.ProjectInfoMapper;
-import com.example.spba.dao.SysDeptMapper;
-import com.example.spba.domain.entity.InfoParameters;
-import com.example.spba.domain.entity.BusinessEnterprise;
-import com.example.spba.domain.entity.ProjectInfo;
-import com.example.spba.domain.entity.SysDept;
-import com.example.spba.domain.dto.ProjectInfoDTO;
 import com.example.spba.service.CaptchaService;
 import com.example.spba.service.PublicService;
 import com.example.spba.utils.R;
-import com.example.spba.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -31,18 +17,6 @@ public class PublicController {
     private static final Logger logger = LoggerFactory.getLogger(PublicController.class);
 
     @Autowired
-    private InfoParametersMapper infoParametersMapper;
-    
-    @Autowired
-    private BusinessEnterpriseMapper businessEnterpriseMapper;
-    
-    @Autowired
-    private ProjectInfoMapper projectInfoMapper;
-    
-    @Autowired
-    private SysDeptMapper sysDeptMapper;
-    
-    @Autowired
     private CaptchaService captchaService;
     
     @Autowired
@@ -50,48 +24,23 @@ public class PublicController {
 
     /**
      * 查询全量国家信息
-     * @return 国家信息Map，key为par_key，value为par_value
+     * @return 国家信息列表
      */
     @PostMapping("/query/country")
     public R queryCountry() {
-        try {
-            logger.info("[查询国家信息] 开始查询国家信息");
-            
-            List<String> countryList = infoParametersMapper.selectByType("country");
-            logger.info("[查询国家信息] 查询完成，返回国家数量: {}", countryList.size());
-            
-            return R.success(countryList);
-        } catch (Exception e) {
-            logger.error("[查询国家信息] 查询失败，异常: {}", e.getMessage(), e);
-            return R.error("查询国家信息失败：" + e.getMessage());
-        }
+        logger.info("[查询国家信息] 调用公共服务查询国家信息");
+        return publicService.queryCountry();
     }
 
 
     /**
      * 查询企业ID和企业名称
-     * @return 企业信息Map，key为id，value为enterprise_name
+     * @return 企业信息列表
      */
     @PostMapping("/query/enterprise")
     public R queryEnterprise() {
-        try {
-            logger.info("[查询企业信息] 开始查询企业信息");
-            
-            QueryWrapper queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("reg_category", 1);
-            List<BusinessEnterprise> enterpriseList = businessEnterpriseMapper.selectList(queryWrapper);
-            
-            Map<String, String> enterpriseMap = new HashMap<>();
-            for (BusinessEnterprise enterprise : enterpriseList) {
-                enterpriseMap.put(enterprise.getId(), enterprise.getEnterpriseName());
-            }
-            
-            logger.info("[查询企业信息] 查询完成，返回企业数量: {}", enterpriseList.size());
-            return R.success(publicService.convertKeyValueToValueText(enterpriseMap));
-        } catch (Exception e) {
-            logger.error("[查询企业信息] 查询失败，异常: {}", e.getMessage(), e);
-            return R.error("查询企业信息失败：" + e.getMessage());
-        }
+        logger.info("[查询企业信息] 调用公共服务查询企业信息");
+        return publicService.queryEnterprise();
     }
     
     /**
@@ -142,77 +91,15 @@ public class PublicController {
 //    }
 
 
-    /**
-     * 查询项目信息
-     * @return 项目信息列表，包含id和project_name
-     */
-    @PostMapping("/query/project")
-    public R queryProject() {
-        try {
-            logger.info("[查询项目信息] 开始查询项目信息");
-            
-            QueryWrapper<ProjectInfo> queryWrapper = new QueryWrapper<>();
 
-            //获取当前时间 格式yyyyMMdd hh:mm:ss
-            String currentDate = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
-
-            queryWrapper.lt("apply_start_time", currentDate);
-            queryWrapper.gt("apply_end_time", currentDate);
-
-            // 只查询开启状态的项目
-            queryWrapper.eq("status", 1);
-            
-            // 按申请开始时间升序排列
-            queryWrapper.orderByAsc("apply_start_time");
-            
-            List<ProjectInfo> projectList = projectInfoMapper.selectList(queryWrapper);
-            
-            // 转换为DTO格式
-            List<ProjectInfoDTO> result = new ArrayList<>();
-            for (ProjectInfo project : projectList) {
-                ProjectInfoDTO dto = new ProjectInfoDTO();
-                dto.setId(project.getId());
-                dto.setProjectName(project.getProjectName());
-                result.add(dto);
-            }
-            
-            logger.info("[查询项目信息] 查询完成，返回项目数量: {}", projectList.size());
-            return R.success(result);
-            
-        } catch (Exception e) {
-            logger.error("[查询项目信息] 查询失败，异常: {}", e.getMessage(), e);
-            return R.error("查询项目信息失败：" + e.getMessage());
-        }
-    }
     
     /**
      * 查询企业属地信息
-     * @return 企业属地信息列表，包含dept_id和dept_name
+     * @return 企业属地信息列表
      */
     @PostMapping("/query/enterpriseLoc")
     public R queryEnterpriseLocation() {
-        try {
-            logger.info("[查询企业属地信息] 开始查询企业属地信息");
-            
-            // 查询parent_id为200的部门信息
-            QueryWrapper<SysDept> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("parent_id", 200);
-            List<SysDept> deptList = sysDeptMapper.selectList(queryWrapper);
-            
-            // 转换为需要的格式
-            List<Map<String, Object>> result = new ArrayList<>();
-            for (SysDept dept : deptList) {
-                Map<String, Object> deptInfo = new HashMap<>();
-                deptInfo.put("dept_id", dept.getDeptId());
-                deptInfo.put("dept_name", dept.getDeptName());
-                result.add(deptInfo);
-            }
-            
-            logger.info("[查询企业属地信息] 查询完成，返回属地数量: {}", deptList.size());
-            return R.success(result);
-        } catch (Exception e) {
-            logger.error("[查询企业属地信息] 查询失败，异常: {}", e.getMessage(), e);
-            return R.error("查询企业属地信息失败：" + e.getMessage());
-        }
+        logger.info("[查询企业属地信息] 调用公共服务查询企业属地信息");
+        return publicService.queryEnterpriseLocation();
     }
 }

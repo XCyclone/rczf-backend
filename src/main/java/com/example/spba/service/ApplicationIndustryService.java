@@ -2,6 +2,7 @@ package com.example.spba.service;
 
 import com.example.spba.domain.dto.IndustryApplySubmitDTO;
 import com.example.spba.domain.dto.IndustryApplyUpdateDTO;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
 import com.example.spba.utils.R;
 
 public interface ApplicationIndustryService {
@@ -36,6 +37,14 @@ public interface ApplicationIndustryService {
      * @return 申请记录列表
      */
     R queryIndustryApplications(String userId);
+    
+    /**
+     * 分页查询产业人才的所有申请记录
+     * @param userId 用户ID
+     * @param queryDTO 分页查询参数
+     * @return 分页的申请记录列表
+     */
+    R queryIndustryApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO);
     
     /**
      * 查询用户的所有申请记录（统一查询接口）

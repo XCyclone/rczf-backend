@@ -1,5 +1,6 @@
 package com.example.spba.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.spba.domain.dto.BusinessUserApproveDTO;
 import com.example.spba.domain.dto.BusinessUserUpdateApproveDTO;
 import com.example.spba.domain.dto.EnterpriseUserQueryDTO;
@@ -47,9 +48,9 @@ public class EnterpriseUserController {
 
 
     /**
-     * 获取企业下的用户信息（带筛选条件）
-     * @param query 筛选条件
-     * @return 该企业下的正式用户信息列表
+     * 获取企业下的用户信息（带筛选条件和分页）
+     * @param query 筛选条件和分页参数
+     * @return 该企业下的正式用户信息分页列表
      */
     @PostMapping("/getUserInfo")
     public R getEnterpriseUsers(@RequestAttribute(CURRENT_USER_ID) String userId,
@@ -58,8 +59,9 @@ public class EnterpriseUserController {
             logger.info("[企业正式用户查询] 开始查询企业正式用户信息，企业ID: {}, 筛选条件: {}", userId, query);
             String enterpriseId = userId;
 
-            List<BusinessUser> users = businessEnterpriseService.getEnterpriseUsers(enterpriseId, query);
-            logger.info("[企业正式用户查询] 查询成功，企业ID: {}, 返回用户数: {}", userId, users.size());
+            IPage<BusinessUser> users = businessEnterpriseService.getEnterpriseUsers(enterpriseId, query);
+            logger.info("[企业正式用户查询] 查询成功，企业ID: {}, 返回用户数: {}, 总记录数: {}", 
+                       userId, users.getRecords().size(), users.getTotal());
             return R.success(users);
         } catch (IllegalArgumentException e) {
             logger.error("[企业正式用户查询] 参数异常，企业ID: {}, 异常: {}", userId, e.getMessage(), e);
@@ -71,9 +73,9 @@ public class EnterpriseUserController {
     }
 
     /**
-     * 获取企业下的用户信息申请（带筛选条件）
-     * @param query 筛选条件
-     * @return 该企业下的用户信息申请列表
+     * 获取企业下的用户信息申请（带筛选条件和分页）
+     * @param query 筛选条件和分页参数
+     * @return 该企业下的用户信息申请分页列表
      */
     @PostMapping("/getUserApplyInfo")
     public R getEnterpriseUsersApply(@RequestAttribute(CURRENT_USER_ID) String userId,
@@ -82,8 +84,9 @@ public class EnterpriseUserController {
             logger.info("[企业用户查询] 开始查询企业用户信息，企业ID: {}, 筛选条件: {}", userId, query);
             String enterpriseId = userId;
 
-            List<BusinessUserApply> users = businessEnterpriseService.getEnterpriseUsersApply(enterpriseId, query);
-            logger.info("[企业用户查询] 查询成功，企业ID: {}, 返回用户数: {}", userId, users.size());
+            IPage<BusinessUserApply> users = businessEnterpriseService.getEnterpriseUsersApply(enterpriseId, query);
+            logger.info("[企业用户查询] 查询成功，企业ID: {}, 返回用户数: {}, 总记录数: {}", 
+                       userId, users.getRecords().size(), users.getTotal());
             return R.success(users);
         } catch (IllegalArgumentException e) {
             logger.error("[企业用户查询] 参数异常，企业ID: {}, 异常: {}", userId, e.getMessage(), e);

@@ -1,16 +1,21 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.ApplicationAgencyTalentMapper;
 import com.example.spba.dao.BusinessEnterpriseMapper;
 import com.example.spba.dao.BusinessUserMapper;
 import com.example.spba.dao.ProjectInfoMapper;
+import com.example.spba.dao.ViewApplicationAgencyTalentMapper;
 import com.example.spba.domain.dto.AgencyApplySubmitDTO;
 import com.example.spba.domain.dto.AgencyApplyUpdateDTO;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
 import com.example.spba.domain.entity.ApplicationAgencyTalent;
 import com.example.spba.domain.entity.BusinessEnterprise;
 import com.example.spba.domain.entity.BusinessUser;
 import com.example.spba.domain.entity.ProjectInfo;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
@@ -38,6 +43,9 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
     
     @Autowired
     private ProjectInfoMapper projectInfoMapper;
+    
+    @Autowired
+    private ViewApplicationAgencyTalentMapper viewApplicationAgencyTalentMapper;
 
     @Override
     @Transactional
@@ -332,17 +340,57 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
                 return R.error("只有机关单位员工才能查询申请记录");
             }
             
-            // 3. 查询该用户的所有机关单位申请记录
-            QueryWrapper<ApplicationAgencyTalent> wrapper = new QueryWrapper<>();
+            // 3. 从视图查询该用户的所有机关单位申请记录
+            QueryWrapper<ViewApplicationAgencyTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationAgencyTalent> applications = applicationAgencyTalentMapper.selectList(wrapper);
+            List<ViewApplicationAgencyTalent> applications = viewApplicationAgencyTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             
         } catch (Exception e) {
             return R.error("查询机关单位申请记录失败：" + e.getMessage());
+        }
+    }
+    
+    @Override
+    public R queryAgencyApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO) {
+        try {
+            // 1. 校验用户是否存在
+            BusinessUser user = businessUserMapper.selectById(userId);
+            if (user == null) {
+                return R.error("用户信息不存在");
+            }
+            
+            // 2. 校验用户类型（必须是机关单位员工）
+            if (user.getRegType() == null || user.getRegType() != 2) {
+                return R.error("只有机关单位员工才能查询申请记录");
+            }
+            
+            // 3. 参数校验
+            if (queryDTO.getPageNum() == null || queryDTO.getPageNum() <= 0) {
+                queryDTO.setPageNum(1);
+            }
+            if (queryDTO.getPageSize() == null || queryDTO.getPageSize() <= 0) {
+                queryDTO.setPageSize(10);
+            }
+            
+            // 4. 构建分页对象
+            Page<ViewApplicationAgencyTalent> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+            
+            // 5. 构建查询条件
+            QueryWrapper<ViewApplicationAgencyTalent> wrapper = new QueryWrapper<>();
+            wrapper.eq("applicant_id", userId);
+            wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
+            
+            // 6. 执行分页查询
+            IPage<ViewApplicationAgencyTalent> resultPage = viewApplicationAgencyTalentMapper.selectPage(page, wrapper);
+            
+            return R.success(resultPage);
+            
+        } catch (Exception e) {
+            return R.error("分页查询机关单位申请记录失败：" + e.getMessage());
         }
     }
     
@@ -356,11 +404,11 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             }
             
             // 2. 查询该用户的所有机关单位申请记录（不校验用户类型，查询所有记录）
-            QueryWrapper<ApplicationAgencyTalent> wrapper = new QueryWrapper<>();
+            QueryWrapper<ViewApplicationAgencyTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationAgencyTalent> applications = applicationAgencyTalentMapper.selectList(wrapper);
+            List<ViewApplicationAgencyTalent> applications = viewApplicationAgencyTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             

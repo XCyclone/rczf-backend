@@ -1,7 +1,10 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.*;
+import com.example.spba.domain.dto.EnterpriseApplicationQueryDTO;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.domain.entity.ApplicationIndustry;
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -108,6 +112,62 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     }
     
     @Override
+    public R queryViewApplicationsWithPage(EnterpriseApplicationQueryDTO queryDTO) {
+        try {
+            logger.info("[企业申请分页查询] 开始分页查询企业申请视图，参数: {}", queryDTO);
+            
+            // 参数校验
+            if (queryDTO.getPageNum() == null || queryDTO.getPageNum() <= 0) {
+                queryDTO.setPageNum(1);
+            }
+            if (queryDTO.getPageSize() == null || queryDTO.getPageSize() <= 0) {
+                queryDTO.setPageSize(10);
+            }
+            
+            // 构建分页对象
+            Page<ViewApplicationIndustry> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+            
+            // 构建查询条件
+            QueryWrapper<ViewApplicationIndustry> wrapper = new QueryWrapper<>();
+            
+            // 校验企业 ID 必须存在
+            if (queryDTO.getEnterpriseId() == null || queryDTO.getEnterpriseId().trim().isEmpty()) {
+                return R.error("企业 ID 不能为空");
+            }
+            
+            // 只查询该企业的申请（enterprise_id 等于当前用户 ID）
+            wrapper.eq("enterprise_id", queryDTO.getEnterpriseId());
+            
+            // 日期范围筛选
+            if (queryDTO.getStartDate() != null && !queryDTO.getStartDate().trim().isEmpty()) {
+                wrapper.ge("apply_date", queryDTO.getStartDate());
+            }
+            if (queryDTO.getEndDate() != null && !queryDTO.getEndDate().trim().isEmpty()) {
+                wrapper.le("apply_date", queryDTO.getEndDate());
+            }
+            
+            // 申请状态筛选
+            if (queryDTO.getApplyStatus() != null) {
+                wrapper.eq("apply_status", queryDTO.getApplyStatus());
+            }
+            
+            // 按申请时间倒序排列
+            wrapper.orderByDesc("apply_date", "apply_time");
+            
+            // 执行分页查询
+            IPage<ViewApplicationIndustry> resultPage = viewApplicationIndustryMapper.selectPage(page, wrapper);
+            
+            logger.info("[企业申请分页查询] 查询完成，总记录数: {}, 当前页记录数: {}", 
+                       resultPage.getTotal(), resultPage.getRecords().size());
+            
+            return R.success(resultPage);
+        } catch (Exception e) {
+            logger.error("[企业申请分页查询] 查询失败，异常: {}", e.getMessage(), e);
+            return R.error("分页查询企业申请视图失败: " + e.getMessage());
+        }
+    }
+    
+    @Override
     public R withdrawApplication(String applicationId, String userId) {
         try {
             logger.info("[企业申请撤回] 开始处理撤回申请，申请ID: {}, 用户ID: {}", applicationId, userId);
@@ -133,7 +193,7 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             }
 
             // 检查用户信息，只有发起人可以撤回
-            if (application.getEnterpriseId() != userId) {
+            if (!Objects.equals(application.getEnterpriseId(), userId)) {
                 logger.warn("[企业申请撤回] 权限不足，申请用户ID: {}, 操作用户ID: {}", application.getEnterpriseId(), userId);
                 return R.error("只有申请提交人才能撤回");
             }
@@ -168,13 +228,12 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             }
 
             // 检查用户信息，只有发起人可以修改
-            if (application.getEnterpriseId() != userId) {
+            if (!Objects.equals(application.getEnterpriseId(), userId)) {
                 return R.error("只有申请提交人才能修改");
             }
             
             // 更新申请信息
             application.setProjectId(updateDTO.getProjectId());
-            application.setProjectName(updateDTO.getProjectName());
             application.setCommunityId1(updateDTO.getCommunityId1());
             application.setCommunityId2(updateDTO.getCommunityId2());
             application.setCommunityId3(updateDTO.getCommunityId3());

@@ -2,19 +2,26 @@ package com.example.spba.controller;
 
 import com.example.spba.controller.base.BaseController;
 import com.example.spba.dao.ProjectCommunityMapper;
+import com.example.spba.dao.ProjectInfoMapper;
+import com.example.spba.domain.dto.EnterpriseApplicationQueryDTO;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
+import com.example.spba.domain.entity.ProjectInfo;
 import com.example.spba.service.EnterpriseApplyService;
+import com.example.spba.service.PublicService;
 import com.example.spba.utils.R;
+import com.example.spba.utils.Time;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,34 +31,16 @@ import static com.example.spba.utils.RequestAttributeUtil.CURRENT_USER_ID;
 @RestController
 @RequestMapping("/enterprise/apply")
 @Validated
-public class EnterpriseApplyController extends BaseController {
+public class EnterpriseApplyController {
     
     private static final Logger logger = LoggerFactory.getLogger(EnterpriseApplyController.class);
 
     @Resource
     private EnterpriseApplyService enterpriseApplyService;
-    
-    @Autowired
-    private ProjectCommunityMapper projectCommunityMapper;
 
-//    /**
-//     * 新增标签接口
-//     * @param tag 申请标签
-//     * @param title 标签名称
-//     * @param files 图片文件列表
-//     * @return 操作结果
-//     */
-//    @PostMapping(value = "/addTag", consumes = "multipart/form-data")
-//    public R addTag(@RequestParam("tag") String tag,
-//                    @RequestParam("title") String title,
-//                    @RequestPart("files") List<MultipartFile> files) {
-//        // 可以在这里获取当前用户ID进行权限验证或日志记录
-//        String currentUserId = getCurrentUserId();
-//        System.out.println("当前操作用户ID: " + currentUserId);
-//
-//        return enterpriseApplyService.addTag(tag, title, files);
-//    }
-    
+    @Autowired
+    private PublicService publicService;
+
     /**
      * 企业申请提交接口
      * @param submitDTO 申请信息
@@ -65,21 +54,34 @@ public class EnterpriseApplyController extends BaseController {
         return result;
     }
 
-
     
     /**
-     * 查询企业申请视图信息
+     * 查询企业申请视图信息（支持分页）
+     * @param queryDTO 分页查询参数（可选）
      * @return 企业申请视图列表，包含企业名称和小区名称等关联信息
      */
     @PostMapping("/query")
-    public R queryViewApplications() {
-        // 可以根据当前用户ID进行数据过滤
-        String currentUserId = getCurrentUserId();
-        logger.info("[企业申请查询] 用户ID: {}", currentUserId);
-        
-        R result = enterpriseApplyService.queryViewApplications();
-        logger.info("[企业申请查询] 完成，用户ID: {}, 结果: {}", currentUserId, result.getMessage());
-        return result;
+    public R queryViewApplications(@RequestAttribute(CURRENT_USER_ID) String userId,
+                                  @RequestBody(required = false) EnterpriseApplicationQueryDTO queryDTO) {
+        try {
+            logger.info("[企业申请查询] 用户 ID: {}, 查询参数：{}", userId, queryDTO);
+                        
+            // 创建默认分页参数
+            if (queryDTO == null) {
+                queryDTO = new EnterpriseApplicationQueryDTO();
+            }
+                        
+            // 设置企业 ID 为当前用户 ID，确保只查询该企业的申请
+            queryDTO.setEnterpriseId(userId);
+                // 调用分页查询方法
+                R result = enterpriseApplyService.queryViewApplicationsWithPage(queryDTO);
+                logger.info("[企业申请分页查询] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
+                return result;
+
+        } catch (Exception e) {
+            logger.error("[企业申请查询] 查询失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);
+            return R.error("查询失败: " + e.getMessage());
+        }
     }
     
     /**
@@ -101,29 +103,14 @@ public class EnterpriseApplyController extends BaseController {
     /**
      * 查询项目下的小区信息
      * @param param 包含项目ID的参数
-     * @return 该项目关联的小区ID列表
+     * @return 该项目关联的小区ID和名称列表
      */
     @PostMapping("/query/community")
     public R queryCommunitiesByProject(@RequestBody Map<String, String> param) {
         String projectId = param.get("projectId");
-        logger.info("[查询项目小区] 项目ID: {}", projectId);
+        logger.info("[查询项目小区] 调用公共服务查询项目小区信息，项目ID: {}", projectId);
         
-        // 参数校验
-        if (projectId == null || projectId.trim().isEmpty()) {
-            logger.error("[查询项目小区] 项目ID为空");
-            return R.error("项目ID不能为空");
-        }
-        
-        try {
-            // 查询该项目关联的小区列表
-            List<String> communityIds = projectCommunityMapper.selectCommunityIdsByProjectId(projectId);
-            logger.info("[查询项目小区] 查询完成，项目ID: {}, 小区数量: {}", projectId, communityIds.size());
-            
-            return R.success(communityIds);
-        } catch (Exception e) {
-            logger.error("[查询项目小区] 查询失败，项目ID: {}, 异常: {}", projectId, e.getMessage(), e);
-            return R.error("查询小区信息失败: " + e.getMessage());
-        }
+        return publicService.queryCommunitiesByProject(projectId);
     }
     
     /**
@@ -154,4 +141,54 @@ public class EnterpriseApplyController extends BaseController {
             return R.error("申请修改失败: " + e.getMessage());
         }
     }
+
+    /**
+     * 查询项目信息-企业用户
+     * @return 项目信息列表
+     */
+    @PostMapping("/query/project")
+    public R queryEnterpriseProject() {
+        logger.info("[查询项目信息] 调用公共服务查询项目信息");
+        return publicService.queryEnterpriseProject();
+    }
+    
+//    /**
+//     * 查询是否开放企业申请
+//     * 参考 PublicController 中的 queryEnterpriseProject 方法
+//     * @return 是否开放申请状态
+//     */
+//    @PostMapping("/check/apply/status")
+//    public R checkApplyStatus() {
+//        logger.info("[检查企业申请状态] 开始检查企业申请是否开放");
+//
+//        try {
+//            // 获取当前时间 格式yyyyMMdd HH:mm:ss
+//            String currentDate = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+//
+//            // 构建查询条件
+//            QueryWrapper<ProjectInfo> queryWrapper = new QueryWrapper<>();
+//            queryWrapper.lt("enterprise_start_time", currentDate);
+//            queryWrapper.gt("enterprise_end_time", currentDate);
+//            queryWrapper.eq("status", 1); // 只查询开启状态的项目
+//
+//            // 查询符合条件的项目数量
+//            int projectCount = projectInfoMapper.selectCount(queryWrapper);
+//
+//            logger.info("[检查企业申请状态] 查询完成，当前开放申请的项目数量: {}", projectCount);
+//
+//            Map<String, String> result = new HashMap<>();
+//            // 如果有项目在申请时间内且状态为开启，则返回开放状态
+//            if (projectCount > 0) {
+//                result.put("flag", "1");
+//                return R.success(result, "企业申请已开放");
+//            } else {
+//                result.put("flag", "0");
+//                return R.success(result, "当前非申请时段，请在申请时段提交申请");
+//            }
+//
+//        } catch (Exception e) {
+//            logger.error("[检查企业申请状态] 查询失败，异常: {}", e.getMessage(), e);
+//            return R.error("检查申请状态失败：" + e.getMessage());
+//        }
+//    }
 }

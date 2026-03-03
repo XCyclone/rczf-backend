@@ -34,9 +34,6 @@ public class ViewApplicationIndustry implements Serializable {
     /** 申请意向小区房源套数 */
     private Integer houseCount;
 
-    /** 期望入住时间 */
-    private String expectedMoveinDate;
-
     /** 申请日期 */
     private String applyDate;
 
@@ -93,7 +90,16 @@ public class ViewApplicationIndustry implements Serializable {
 
     /** 企业名称 */
     private String enterpriseName;
-
-    /** 小区名称 */
-    private String communityName;
+        
+    /** 企业属地ID */
+    private String locationId;
+        
+    /** 申请意向小区1名称 */
+    private String communityName1;
+        
+    /** 申请意向小区2名称 */
+    private String communityName2;
+        
+    /** 申请意向小区3名称 */
+    private String communityName3;
 }

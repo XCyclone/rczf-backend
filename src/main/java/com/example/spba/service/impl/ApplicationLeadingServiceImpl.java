@@ -1,16 +1,17 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.ApplicationLeadingTalentMapper;
 import com.example.spba.dao.BusinessEnterpriseMapper;
 import com.example.spba.dao.BusinessUserMapper;
 import com.example.spba.dao.ProjectInfoMapper;
+import com.example.spba.dao.ViewApplicationLeadingTalentMapper;
 import com.example.spba.domain.dto.LeadingApplySubmitDTO;
 import com.example.spba.domain.dto.LeadingApplyUpdateDTO;
-import com.example.spba.domain.entity.ApplicationLeadingTalent;
-import com.example.spba.domain.entity.BusinessEnterprise;
-import com.example.spba.domain.entity.BusinessUser;
-import com.example.spba.domain.entity.ProjectInfo;
+import com.example.spba.domain.dto.UserApplicationQueryDTO;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.ApplicationLeadingService;
 import com.example.spba.utils.R;
 import com.example.spba.utils.Time;
@@ -38,6 +39,9 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
     
     @Autowired
     private ProjectInfoMapper projectInfoMapper;
+    
+    @Autowired
+    private ViewApplicationLeadingTalentMapper viewApplicationLeadingTalentMapper;
 
     @Override
     @Transactional
@@ -336,17 +340,57 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
                 return R.error("只有领军优青人才才能查询申请记录");
             }
             
-            // 3. 查询该用户的所有领军优青人才申请记录
-            QueryWrapper<ApplicationLeadingTalent> wrapper = new QueryWrapper<>();
+            // 3. 从视图查询该用户的所有领军优青人才申请记录
+            QueryWrapper<ViewApplicationLeadingTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationLeadingTalent> applications = applicationLeadingTalentMapper.selectList(wrapper);
+            List<ViewApplicationLeadingTalent> applications = viewApplicationLeadingTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             
         } catch (Exception e) {
             return R.error("查询领军优青人才申请记录失败：" + e.getMessage());
+        }
+    }
+    
+    @Override
+    public R queryLeadingApplicationsWithPage(String userId, UserApplicationQueryDTO queryDTO) {
+        try {
+            // 1. 校验用户是否存在
+            BusinessUser user = businessUserMapper.selectById(userId);
+            if (user == null) {
+                return R.error("用户信息不存在");
+            }
+            
+            // 2. 校验用户类型（必须是领军优青人才）
+            if (user.getRegType() == null || user.getRegType() != 4) {
+                return R.error("只有领军优青人才才能查询申请记录");
+            }
+            
+            // 3. 参数校验
+            if (queryDTO.getPageNum() == null || queryDTO.getPageNum() <= 0) {
+                queryDTO.setPageNum(1);
+            }
+            if (queryDTO.getPageSize() == null || queryDTO.getPageSize() <= 0) {
+                queryDTO.setPageSize(10);
+            }
+            
+            // 4. 构建分页对象
+            Page<ViewApplicationLeadingTalent> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+            
+            // 5. 构建查询条件
+            QueryWrapper<ViewApplicationLeadingTalent> wrapper = new QueryWrapper<>();
+            wrapper.eq("applicant_id", userId);
+            wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
+            
+            // 6. 执行分页查询
+            IPage<ViewApplicationLeadingTalent> resultPage = viewApplicationLeadingTalentMapper.selectPage(page, wrapper);
+            
+            return R.success(resultPage);
+            
+        } catch (Exception e) {
+            return R.error("分页查询领军优青人才申请记录失败：" + e.getMessage());
         }
     }
     
@@ -360,11 +404,11 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             }
             
             // 2. 查询该用户的所有领军优青人才申请记录（不校验用户类型，查询所有记录）
-            QueryWrapper<ApplicationLeadingTalent> wrapper = new QueryWrapper<>();
+            QueryWrapper<ViewApplicationLeadingTalent> wrapper = new QueryWrapper<>();
             wrapper.eq("applicant_id", userId);
             wrapper.orderByDesc("apply_date", "apply_time"); // 按申请时间倒序排列
             
-            List<ApplicationLeadingTalent> applications = applicationLeadingTalentMapper.selectList(wrapper);
+            List<ViewApplicationLeadingTalent> applications = viewApplicationLeadingTalentMapper.selectList(wrapper);
             
             return R.success(applications);
             

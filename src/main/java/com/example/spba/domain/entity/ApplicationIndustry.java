@@ -34,9 +34,6 @@ public class ApplicationIndustry implements Serializable {
     /** 申请意向小区房源套数 */
     private Integer houseCount;
 
-    /** 期望入住时间 */
-    private String expectedMoveinDate;
-
     /** 申请日期 */
     private String applyDate;
 
@@ -58,7 +55,7 @@ public class ApplicationIndustry implements Serializable {
     /** 申请附件ID */
     private String attachmentId;
 
-    /** 申请状态：0-撤回/待提交；1-提交/待审核；2-属地审核通过；3-属地审核拒绝；4-产促审核通过；5-产促审核拒绝； */
+    /** 申请状态：0-撤回/待提交；1-提交/待审核；2-属地审核通过；3-属地审核拒绝；4-产促审核通过；5-产促审核拒绝；6-企业待选房；7-已完成选房 */
     private Integer applyStatus;
 
     /** 申请排序 */
@@ -108,10 +105,4 @@ public class ApplicationIndustry implements Serializable {
 
     /** 保留字段6 */
     private String reserve6;
-    
-    /** 属地发放指标数 */
-    private Integer enterpriseLocationQuota;
-
-    /** 产促确定配额数 */
-    private Integer proPromoQuota;
 }

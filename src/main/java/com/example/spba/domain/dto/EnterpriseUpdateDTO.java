@@ -13,8 +13,6 @@ public class EnterpriseUpdateDTO {
     @NotBlank(message = "运营项目ID不能为空")
     private String projectId;
 
-    private String projectName;
-
     private String communityId1;
 
     private String communityId2;
