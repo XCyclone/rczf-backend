@@ -149,6 +149,7 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         String[] publicEndpoints = {
             "/login",
             "/public/",
+            "/api/",
             "/captcha",
             "/swagger-ui",
             "/v3/api-docs",
@@ -164,6 +165,10 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
 
         // 特殊处理/public/**路径
         if (requestURI.matches(".*/public/.*")) {
+            return true;
+        }
+        // 特殊处理/public/**路径
+        if (requestURI.matches(".*/api/.*")) {
             return true;
         }
 

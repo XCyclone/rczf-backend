@@ -63,7 +63,7 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
+            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -248,8 +248,8 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             agencyApply.setHouseType4(form.getHouseType4());
             
             // 更新申请时间和状态
-            agencyApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-            agencyApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
+//            agencyApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
+//            agencyApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
             agencyApply.setApplyStatus(1); // 1-提交/待审核
             
             // 更新申请人相关信息
@@ -271,35 +271,35 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
     
     /**
      * 判断当前时间是否在申请时间区间内
-     * @param currentTime 当前时间 yyyy-MM-dd格式
-     * @param startTime 开始时间 yyyy-MM-dd格式
-     * @param endTime 结束时间 yyyy-MM-dd格式
+     * @param currentTime 当前时间 yyyyMMdd格式
+     * @param startTime 开始时间 yyyyMMdd格式
+     * @param endTime 结束时间 yyyyMMdd格式
      * @return 是否在时间区间内
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
-            
+
             // 如果开始时间为空，则认为无开始限制
             Date startDate = startTime != null && !startTime.isEmpty() ? sdf.parse(startTime) : null;
-            
+
             // 如果结束时间为空，则认为无结束限制
             Date endDate = endTime != null && !endTime.isEmpty() ? sdf.parse(endTime) : null;
-            
+
             // 校验开始时间
             if (startDate != null && currentDate.before(startDate)) {
                 return false;
             }
-            
+
             // 校验结束时间
             if (endDate != null && currentDate.after(endDate)) {
                 return false;
             }
-            
+
             return true;
         } catch (ParseException e) {
-            // 时间格式解析错误，返回false
+            // 时间格式解析错误，返回 false
             return false;
         }
     }

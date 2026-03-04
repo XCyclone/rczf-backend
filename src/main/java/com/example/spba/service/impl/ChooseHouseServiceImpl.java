@@ -2,6 +2,7 @@ package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.spba.dao.*;
+import com.example.spba.domain.dto.UserChooseHouseInfoDTO;
 import com.example.spba.domain.entity.*;
 import com.example.spba.service.ChooseHouseService;
 import com.example.spba.utils.R;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -41,6 +43,9 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
     
     @Autowired
     private EnterpriseChoicehouseTimeMapper enterpriseChoicehouseTimeMapper;
+    
+    @Autowired
+    private CommunityInfoMapper communityInfoMapper;
 
     @Override
     public R enterpriseJudgeChooseHouseTime(String userId) {
@@ -72,7 +77,12 @@ public class ChooseHouseServiceImpl implements ChooseHouseService {
             return R.error("判断企业选房时间失败：" + e.getMessage());
         }
     }
-    
+
+    @Override
+    public R getUserChooseHouseInfo(String userId) {
+        return null;
+    }
+
     @Override
     public R judgeChooseHouseTime(String userId) {
         try {

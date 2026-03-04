@@ -129,4 +129,6 @@ public class ViewApplicationIndustryTalent implements Serializable {
 
     /** 申请意向小区 3 名称（来自关联表） */
     private String communityName3;
+
+
 }

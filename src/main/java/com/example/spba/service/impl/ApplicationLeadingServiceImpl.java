@@ -59,7 +59,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
+            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -73,7 +73,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             // 3. 校验申请人类型（必须是领军优青人才）
             // 注意：这里需要根据实际的领军优青人才类型来确定regType值
             // 暂时使用regType=4作为示例，实际项目中需要确认正确的值
-            if (applicant.getRegType() == null || applicant.getRegType() != 4) {
+            if (applicant.getRegType() == null || applicant.getRegType() != 3) {
                 return R.error("只有领军优青人才才能提交领军优青人才申请");
             }
             
@@ -226,7 +226,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             // 6. 校验申请人类型（必须是领军优青人才）
             // 注意：这里需要根据实际的领军优青人才类型来确定regType值
             // 暂时使用regType=4作为示例，实际项目中需要确认正确的值
-            if (applicant.getRegType() == null || applicant.getRegType() != 4) {
+            if (applicant.getRegType() == null || applicant.getRegType() != 3) {
                 return R.error("只有领军优青人才才能提交领军优青人才申请");
             }
             
@@ -248,8 +248,8 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             leadingApply.setHouseType4(form.getHouseType4());
             
             // 更新申请时间和状态
-            leadingApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-            leadingApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
+//            leadingApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
+//            leadingApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
             leadingApply.setApplyStatus(1); // 1-提交/待审核
             
             // 更新申请人相关信息
@@ -278,7 +278,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
             
             // 如果开始时间为空，则认为无开始限制

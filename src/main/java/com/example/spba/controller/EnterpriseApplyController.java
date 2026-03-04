@@ -73,10 +73,10 @@ public class EnterpriseApplyController {
                         
             // 设置企业 ID 为当前用户 ID，确保只查询该企业的申请
             queryDTO.setEnterpriseId(userId);
-                // 调用分页查询方法
-                R result = enterpriseApplyService.queryViewApplicationsWithPage(queryDTO);
-                logger.info("[企业申请分页查询] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
-                return result;
+            // 调用分页查询方法
+            R result = enterpriseApplyService.queryViewApplicationsWithPage(queryDTO);
+            logger.info("[企业申请分页查询] 完成，用户ID: {}, 结果: {}", userId, result.getMessage());
+            return result;
 
         } catch (Exception e) {
             logger.error("[企业申请查询] 查询失败，用户ID: {}, 异常: {}", userId, e.getMessage(), e);

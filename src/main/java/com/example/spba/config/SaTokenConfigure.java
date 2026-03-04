@@ -51,6 +51,7 @@ public class SaTokenConfigure implements WebMvcConfigurer
         }))
         .addPathPatterns("/**")
         .excludePathPatterns("/public/**")  // 排除公共接口
+        .excludePathPatterns("/api/**")
         .excludePathPatterns("/login");     // 排除登录接口
     }
 }

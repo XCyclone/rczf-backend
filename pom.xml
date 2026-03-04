@@ -10,9 +10,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>spba-api</artifactId>
+    <artifactId>rczf-int-api</artifactId>
     <version>1.0.0</version>
-    <description>Spring Boot Admin 通用后台管理系统 API</description>
+    <description>Spring Boot 通用管理系统 API</description>
     <properties>
         <java.version>8</java.version>
     </properties>

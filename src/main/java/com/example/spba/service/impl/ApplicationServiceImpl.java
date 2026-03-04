@@ -1,8 +1,6 @@
 package com.example.spba.service.impl;
 
-import com.example.spba.domain.entity.ApplicationAgencyTalent;
-import com.example.spba.domain.entity.ApplicationIndustryTalent;
-import com.example.spba.domain.entity.ApplicationLeadingTalent;
+import com.example.spba.domain.entity.*;
 import com.example.spba.service.ApplicationAgencyService;
 import com.example.spba.service.ApplicationIndustryService;
 import com.example.spba.service.ApplicationLeadingService;
@@ -50,7 +48,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 List<?> agencyApplications = (List<?>) agencyResult.getData();
                 for (Object app : agencyApplications) {
                     Map<String, Object> appMap = convertToMap(app);
-                    appMap.put("applyType", "2"); // 机关单位用房申请
+                    appMap.put("applicantType", "2"); // 机关单位用房申请
                     allApplications.add(appMap);
                 }
             }
@@ -60,7 +58,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 List<?> industryApplications = (List<?>) industryResult.getData();
                 for (Object app : industryApplications) {
                     Map<String, Object> appMap = convertToMap(app);
-                    appMap.put("applyType", "1"); // 产业人才房申请
+                    appMap.put("applicantType", "1"); // 产业人才房申请
                     allApplications.add(appMap);
                 }
             }
@@ -70,7 +68,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 List<?> leadingApplications = (List<?>) leadingResult.getData();
                 for (Object app : leadingApplications) {
                     Map<String, Object> appMap = convertToMap(app);
-                    appMap.put("applyType", "3"); // 领军、优青人才房申请
+                    appMap.put("applicantType", "3"); // 领军、优青人才房申请
                     allApplications.add(appMap);
                 }
             }
@@ -110,8 +108,8 @@ public class ApplicationServiceImpl implements ApplicationService {
      */
     private Map<String, Object> convertToMap(Object obj) {
         Map<String, Object> map = new HashMap<>();
-        if (obj instanceof ApplicationAgencyTalent) {
-            ApplicationAgencyTalent talent = (ApplicationAgencyTalent) obj;
+        if (obj instanceof ViewApplicationAgencyTalent) {
+            ViewApplicationAgencyTalent talent = (ViewApplicationAgencyTalent) obj;
             map.put("applicationId", talent.getApplicationId());
             map.put("projectId", talent.getProjectId());
             map.put("projectName", talent.getProjectName());
@@ -125,12 +123,23 @@ public class ApplicationServiceImpl implements ApplicationService {
             map.put("applyDate", talent.getApplyDate());
             map.put("applyTime", talent.getApplyTime());
             map.put("applicantId", talent.getApplicantId());
+            map.put("applicantZjhm", talent.getApplicantZjhm());
             map.put("applicantName", talent.getApplicantName());
+            map.put("applicantCompanyId", talent.getApplicantCompanyId());
+            map.put("applicantCompanyUscc", talent.getApplicantCompanyUscc());
+            map.put("existLaborContract", talent.getExistLaborContract());
+            map.put("hashouse", talent.getHashouse());
+            map.put("houseCertificate", talent.getHouseCertificate());
             map.put("applyStatus", talent.getApplyStatus());
             map.put("applySort", talent.getApplySort());
             map.put("currentSort", talent.getCurrentSort());
-        } else if (obj instanceof ApplicationIndustryTalent) {
-            ApplicationIndustryTalent talent = (ApplicationIndustryTalent) obj;
+            map.put("applicantCompanyName", talent.getApplicantCompanyName());
+            map.put("communityName1", talent.getCommunityName1());
+            map.put("communityName2", talent.getCommunityName2());
+            map.put("communityName3", talent.getCommunityName3());
+//            map.put("applicantType", talent.getApplicantType());
+        } else if (obj instanceof ViewApplicationIndustryTalent) {
+            ViewApplicationIndustryTalent talent = (ViewApplicationIndustryTalent) obj;
             map.put("applicationId", talent.getApplicationId());
             map.put("projectId", talent.getProjectId());
             map.put("projectName", talent.getProjectName());
@@ -144,12 +153,23 @@ public class ApplicationServiceImpl implements ApplicationService {
             map.put("applyDate", talent.getApplyDate());
             map.put("applyTime", talent.getApplyTime());
             map.put("applicantId", talent.getApplicantId());
+            map.put("applicantZjhm", talent.getApplicantZjhm());
             map.put("applicantName", talent.getApplicantName());
+            map.put("applicantCompanyId", talent.getApplicantCompanyId());
+            map.put("applicantCompanyUscc", talent.getApplicantCompanyUscc());
+            map.put("existLaborContract", talent.getExistLaborContract());
+            map.put("hashouse", talent.getHashouse());
+            map.put("houseCertificate", talent.getHouseCertificate());
             map.put("applyStatus", talent.getApplyStatus());
             map.put("applySort", talent.getApplySort());
             map.put("currentSort", talent.getCurrentSort());
-        } else if (obj instanceof ApplicationLeadingTalent) {
-            ApplicationLeadingTalent talent = (ApplicationLeadingTalent) obj;
+            map.put("applicantCompanyName", talent.getApplicantCompanyName());
+            map.put("communityName1", talent.getCommunityName1());
+            map.put("communityName2", talent.getCommunityName2());
+            map.put("communityName3", talent.getCommunityName3());
+//            map.put("applicantType", talent.getApplicantType());
+        } else if (obj instanceof ViewApplicationLeadingTalent) {
+            ViewApplicationLeadingTalent talent = (ViewApplicationLeadingTalent) obj;
             map.put("applicationId", talent.getApplicationId());
             map.put("projectId", talent.getProjectId());
             map.put("projectName", talent.getProjectName());
@@ -163,10 +183,20 @@ public class ApplicationServiceImpl implements ApplicationService {
             map.put("applyDate", talent.getApplyDate());
             map.put("applyTime", talent.getApplyTime());
             map.put("applicantId", talent.getApplicantId());
+            map.put("applicantZjhm", talent.getApplicantZjhm());
             map.put("applicantName", talent.getApplicantName());
+            map.put("applicantCompanyId", talent.getApplicantCompanyId());
+            map.put("applicantCompanyUscc", talent.getApplicantCompanyUscc());
+            map.put("existLaborContract", talent.getExistLaborContract());
+            map.put("hashouse", talent.getHashouse());
+            map.put("houseCertificate", talent.getHouseCertificate());
             map.put("applyStatus", talent.getApplyStatus());
             map.put("applySort", talent.getApplySort());
             map.put("currentSort", talent.getCurrentSort());
+            map.put("applicantCompanyName", talent.getApplicantCompanyName());
+            map.put("communityName1", talent.getCommunityName1());
+            map.put("communityName2", talent.getCommunityName2());
+            map.put("communityName3", talent.getCommunityName3());
         }
         return map;
     }

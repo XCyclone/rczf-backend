@@ -8,6 +8,7 @@ import com.example.spba.domain.dto.EnterpriseApplicationQueryDTO;
 import com.example.spba.domain.dto.EnterpriseSubmitDTO;
 import com.example.spba.domain.dto.EnterpriseUpdateDTO;
 import com.example.spba.domain.entity.ApplicationIndustry;
+import com.example.spba.domain.entity.ProjectInfo;
 import com.example.spba.domain.entity.ViewApplicationIndustry;
 import com.example.spba.service.EnterpriseApplyService;
 import com.example.spba.utils.R;
@@ -18,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -33,13 +37,57 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
     @Autowired
     private ViewApplicationIndustryMapper viewApplicationIndustryMapper;
 
+    @Autowired
+    private ProjectInfoMapper projectInfoMapper;
+
+    /**
+     * 判断当前时间是否在申请时间区间内
+     * @param currentTime 当前时间 yyyyMMdd格式
+     * @param startTime 开始时间 yyyyMMdd格式
+     * @param endTime 结束时间 yyyyMMdd格式
+     * @return 是否在时间区间内
+     */
+    private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+            Date currentDate = sdf.parse(currentTime);
+
+            // 如果开始时间为空，则认为无开始限制
+            Date startDate = startTime != null && !startTime.isEmpty() ? sdf.parse(startTime) : null;
+
+            // 如果结束时间为空，则认为无结束限制
+            Date endDate = endTime != null && !endTime.isEmpty() ? sdf.parse(endTime) : null;
+
+            // 校验开始时间
+            if (startDate != null && currentDate.before(startDate)) {
+                return false;
+            }
+
+            // 校验结束时间
+            if (endDate != null && currentDate.after(endDate)) {
+                return false;
+            }
+
+            return true;
+        } catch (ParseException e) {
+            // 时间格式解析错误，返回 false
+            return false;
+        }
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public R submitApplication(EnterpriseSubmitDTO submitDTO, String userId, String userName) {
         try {
             logger.info("[企业申请提交] 开始处理企业申请，企业ID: {}, 企业名称: {}, 项目ID: {}", userId, userName, submitDTO.getProjectId());
-            
+            ProjectInfo project = projectInfoMapper.selectById(submitDTO.getProjectId());
+            // 校验申请时间区间
+            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+            if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
+                return R.error("当前不在该项目的申请时间范围内");
+            }
+
             // 校验该企业该项目是否已有在途申请（除了拒绝状态3之外的其他状态）
             if (hasPendingNonRejectedApplication(userId, submitDTO.getProjectId())) {
                 logger.warn("[企业申请提交] 存在在途申请，企业ID: {}, 项目ID: {}", userId, submitDTO.getProjectId());
@@ -234,11 +282,13 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             
             // 更新申请信息
             application.setProjectId(updateDTO.getProjectId());
+            application.setProjectName(updateDTO.getProjectName());
             application.setCommunityId1(updateDTO.getCommunityId1());
             application.setCommunityId2(updateDTO.getCommunityId2());
             application.setCommunityId3(updateDTO.getCommunityId3());
             application.setHouseCount(updateDTO.getHouseCount());
-            // 更新时间和操作人信息
+            application.setApplyStatus(1);
+            // 更新时间
             application.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
             application.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
             

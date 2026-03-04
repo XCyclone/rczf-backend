@@ -28,6 +28,9 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
     private ApplicationIndustryTalentMapper applicationIndustryTalentMapper;
 
     @Autowired
+    private ApplicationIndustryMapper applicationIndustryMapper;
+
+    @Autowired
     private ViewApplicationIndustryTalentMapper viewApplicationIndustryTalentMapper;
     
     @Autowired
@@ -55,7 +58,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
+            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -67,7 +70,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 3. 校验申请人类型（必须是产业人才）
-            if (applicant.getRegType() == null || applicant.getRegType() != 3) {
+            if (applicant.getRegType() == null || applicant.getRegType() != 1) {
                 return R.error("只有产业人才才能提交产业人才申请");
             }
             
@@ -83,7 +86,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 查询该企业在该项目的企业申请记录
-            ApplicationIndustryTalent enterpriseApplication = getEnterpriseApplication(companyId, form.getProjectId());
+            ApplicationIndustry enterpriseApplication = getEnterpriseApplication(companyId, form.getProjectId());
             if (enterpriseApplication == null) {
                 return R.error("该企业未提交该项目的企业申请");
             }
@@ -164,20 +167,19 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
      * @param projectId 项目ID
      * @return 企业申请记录
      */
-    private ApplicationIndustryTalent getEnterpriseApplication(String companyId, String projectId) {
+    private ApplicationIndustry getEnterpriseApplication(String companyId, String projectId) {
         // 这里需要根据实际的查询逻辑来实现
         // 可能需要通过企业ID和项目ID在application_industry表中查询对应的记录
         // 暂时返回null，需要根据实际表结构完善查询逻辑
         
         // 示例查询逻辑（需要根据实际表结构调整）：
-        /*
-        QueryWrapper<ApplicationIndustryTalent> wrapper = new QueryWrapper<>();
+
+        QueryWrapper<ApplicationIndustry> wrapper = new QueryWrapper<>();
         wrapper.eq("enterprise_id", companyId);
         wrapper.eq("project_id", projectId);
-        return applicationIndustryTalentMapper.selectOne(wrapper);
-        */
-        
-        return null;
+        wrapper.eq("apply_status", 4);
+        return applicationIndustryMapper.selectOne(wrapper);
+
     }
     
     @Override
@@ -245,7 +247,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
+            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -257,7 +259,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
             
             // 6. 校验申请人类型（必须是产业人才）
-            if (applicant.getRegType() == null || applicant.getRegType() != 3) {
+            if (applicant.getRegType() == null || applicant.getRegType() != 1) {
                 return R.error("只有产业人才才能提交产业人才申请");
             }
             
@@ -279,8 +281,8 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             industryApply.setHouseType4(form.getHouseType4());
             
             // 更新申请时间和状态
-            industryApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-            industryApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
+//            industryApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
+//            industryApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
             industryApply.setApplyStatus(1); // 1-提交/待审核
             
             // 更新申请人相关信息
@@ -309,7 +311,7 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
             
             // 如果开始时间为空，则认为无开始限制
