@@ -1,6 +1,7 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.*;
@@ -103,9 +104,12 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             application.setApplicationId(applicationId);
             application.setProjectId(submitDTO.getProjectId());
             application.setProjectName(submitDTO.getProjectName());
-            application.setCommunityId1(submitDTO.getCommunityId1());
-            application.setCommunityId2(submitDTO.getCommunityId2());
-            application.setCommunityId3(submitDTO.getCommunityId3());
+            
+            // 设置意向小区，空值设为 null
+            application.setCommunityId1(submitDTO.getCommunityId1() != null && !submitDTO.getCommunityId1().isEmpty() ? submitDTO.getCommunityId1() : null);
+            application.setCommunityId2(submitDTO.getCommunityId2() != null && !submitDTO.getCommunityId2().isEmpty() ? submitDTO.getCommunityId2() : null);
+            application.setCommunityId3(submitDTO.getCommunityId3() != null && !submitDTO.getCommunityId3().isEmpty() ? submitDTO.getCommunityId3() : null);
+            
             application.setHouseCount(submitDTO.getHouseCount());
             application.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
             application.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
@@ -281,19 +285,23 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             }
             
             // 更新申请信息
-            application.setProjectId(updateDTO.getProjectId());
-            application.setProjectName(updateDTO.getProjectName());
-            application.setCommunityId1(updateDTO.getCommunityId1());
-            application.setCommunityId2(updateDTO.getCommunityId2());
-            application.setCommunityId3(updateDTO.getCommunityId3());
-            application.setHouseCount(updateDTO.getHouseCount());
-            application.setApplyStatus(1);
-            // 更新时间
-            application.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-            application.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
+            // 使用 UpdateWrapper 显式指定要更新的字段，确保 null 值也会被更新到数据库
+            UpdateWrapper<ApplicationIndustry> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("application_id", updateDTO.getApplicationId());
             
-            // 保存更新
-            applicationIndustryMapper.updateById(application);
+            // 设置要更新的字段，包括 null 值
+            updateWrapper.set("project_id", updateDTO.getProjectId());
+            updateWrapper.set("project_name", updateDTO.getProjectName());
+            updateWrapper.set("community_id1", updateDTO.getCommunityId1() != null && !updateDTO.getCommunityId1().isEmpty() ? updateDTO.getCommunityId1() : null);
+            updateWrapper.set("community_id2", updateDTO.getCommunityId2() != null && !updateDTO.getCommunityId2().isEmpty() ? updateDTO.getCommunityId2() : null);
+            updateWrapper.set("community_id3", updateDTO.getCommunityId3() != null && !updateDTO.getCommunityId3().isEmpty() ? updateDTO.getCommunityId3() : null);
+            updateWrapper.set("house_count", updateDTO.getHouseCount());
+            updateWrapper.set("apply_status", 1);
+            updateWrapper.set("apply_date", Time.getNowTimeDate("yyyy-MM-dd"));
+            updateWrapper.set("apply_time", Time.getNowTimeDate("HH:mm:ss"));
+            
+            // 执行更新
+            applicationIndustryMapper.update(null, updateWrapper);
             
             return R.success("申请修改成功");
             

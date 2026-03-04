@@ -1,31 +1,26 @@
 package com.example.spba.service;
 
-import com.example.spba.utils.R;
+import com.example.spba.domain.dto.ChooseHouseTask;
+import com.example.spba.domain.entity.CommunityInfo;
+
+import java.util.List;
 
 /**
- * 选房相关服务接口
- * @author Generated
+ * 选房任务服务接口
  */
 public interface ChooseHouseService {
-    
+
     /**
-     * 判断当前用户是否在选房时间内
+     * 判断用户是否有选房资格并返回选房任务信息
      * @param userId 用户 ID
-     * @return true-在选房时间内，false-不在选房时间内
+     * @return 选房任务信息
      */
-    R judgeChooseHouseTime(String userId);
-    
+    ChooseHouseTask checkUserChooseHouseQualification(String userId);
+
     /**
-     * 判断当前企业用户是否在选房时间内
-     * @param userId 企业用户 ID
-     * @return true-在选房时间内，false-不在选房时间内
-     */
-    R enterpriseJudgeChooseHouseTime(String userId);
-    
-    /**
-     * 获取个人选房信息
+     * 查询用户可参与选房的小区信息列表
      * @param userId 用户 ID
-     * @return 个人选房信息
+     * @return 小区信息列表
      */
-    R getUserChooseHouseInfo(String userId);
+    List<CommunityInfo> queryAvailableCommunitiesForUser(String userId);
 }

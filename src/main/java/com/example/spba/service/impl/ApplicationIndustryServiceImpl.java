@@ -1,6 +1,7 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.*;
@@ -111,13 +112,17 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             // 设置基本申请信息
             industryApply.setProjectId(form.getProjectId());
             industryApply.setProjectName(form.getProjectName());
-            industryApply.setCommunityId1(form.getCommunityId1());
-            industryApply.setCommunityId2(form.getCommunityId2());
-            industryApply.setCommunityId3(form.getCommunityId3());
-            industryApply.setHouseType1(form.getHouseType1());
-            industryApply.setHouseType2(form.getHouseType2());
-            industryApply.setHouseType3(form.getHouseType3());
-            industryApply.setHouseType4(form.getHouseType4());
+            
+            // 设置意向小区，空值设为 null
+            industryApply.setCommunityId1(form.getCommunityId1() != null && !form.getCommunityId1().isEmpty() ? form.getCommunityId1() : null);
+            industryApply.setCommunityId2(form.getCommunityId2() != null && !form.getCommunityId2().isEmpty() ? form.getCommunityId2() : null);
+            industryApply.setCommunityId3(form.getCommunityId3() != null && !form.getCommunityId3().isEmpty() ? form.getCommunityId3() : null);
+            
+            // 设置意向房型，空值设为 null
+            industryApply.setHouseType1(form.getHouseType1() != null ? form.getHouseType1() : null);
+            industryApply.setHouseType2(form.getHouseType2() != null ? form.getHouseType2() : null);
+            industryApply.setHouseType3(form.getHouseType3() != null ? form.getHouseType3() : null);
+            industryApply.setHouseType4(form.getHouseType4() != null ? form.getHouseType4() : null);
             
             // 设置申请时间和状态
             industryApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
@@ -130,9 +135,9 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             industryApply.setApplicantId(userId);
             industryApply.setApplicantZjhm(applicant.getIdNumber());
             industryApply.setApplicantName(applicant.getName());
-            industryApply.setApplicantCompanyId(applicant.getCompanyId());
+            industryApply.setApplicantCompanyId(applicant.getCompanyId() != null && !applicant.getCompanyId().isEmpty() ? applicant.getCompanyId() : null);
             industryApply.setApplicantCompanyUscc(getCompanyUscc(applicant.getCompanyId()));
-            industryApply.setExistLaborContract(form.getExistLaborContract()); // 使用传入的劳动合同关系参数
+            industryApply.setExistLaborContract(form.getExistLaborContract() != null ? form.getExistLaborContract() : null); // 使用传入的劳动合同关系参数
             
             // 插入数据库
             applicationIndustryTalentMapper.insert(industryApply);
@@ -269,31 +274,26 @@ public class ApplicationIndustryServiceImpl implements ApplicationIndustryServic
             }
 
             // 8. 更新申请记录
-            // 更新基本申请信息
-            industryApply.setProjectId(form.getProjectId());
-            industryApply.setProjectName(form.getProjectName());
-            industryApply.setCommunityId1(form.getCommunityId1());
-            industryApply.setCommunityId2(form.getCommunityId2());
-            industryApply.setCommunityId3(form.getCommunityId3());
-            industryApply.setHouseType1(form.getHouseType1());
-            industryApply.setHouseType2(form.getHouseType2());
-            industryApply.setHouseType3(form.getHouseType3());
-            industryApply.setHouseType4(form.getHouseType4());
+            // 使用 UpdateWrapper 显式指定要更新的字段，确保 null 值也会被更新到数据库
+            UpdateWrapper<ApplicationIndustryTalent> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("application_id", applicationId);
             
-            // 更新申请时间和状态
-//            industryApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-//            industryApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
-            industryApply.setApplyStatus(1); // 1-提交/待审核
+            // 设置要更新的字段，包括 null 值
+            updateWrapper.set("project_id", form.getProjectId());
+            updateWrapper.set("project_name", form.getProjectName());
+            updateWrapper.set("community_id1", form.getCommunityId1() != null && !form.getCommunityId1().isEmpty() ? form.getCommunityId1() : null);
+            updateWrapper.set("community_id2", form.getCommunityId2() != null && !form.getCommunityId2().isEmpty() ? form.getCommunityId2() : null);
+            updateWrapper.set("community_id3", form.getCommunityId3() != null && !form.getCommunityId3().isEmpty() ? form.getCommunityId3() : null);
+            updateWrapper.set("house_type1", form.getHouseType1() != null ? form.getHouseType1() : null);
+            updateWrapper.set("house_type2", form.getHouseType2() != null ? form.getHouseType2() : null);
+            updateWrapper.set("house_type3", form.getHouseType3() != null ? form.getHouseType3() : null);
+            updateWrapper.set("house_type4", form.getHouseType4() != null ? form.getHouseType4() : null);
+            updateWrapper.set("exist_labor_contract", form.getExistLaborContract() != null ? form.getExistLaborContract() : null);
+            updateWrapper.set("applicant_company_id", applicant.getCompanyId() != null && !applicant.getCompanyId().isEmpty() ? applicant.getCompanyId() : null);
+            updateWrapper.set("apply_status", 1); // 1-提交/待审核
             
-            // 更新申请人相关信息
-            industryApply.setApplicantZjhm(applicant.getIdNumber());
-            industryApply.setApplicantName(applicant.getName());
-            industryApply.setApplicantCompanyId(applicant.getCompanyId());
-            industryApply.setApplicantCompanyUscc(getCompanyUscc(applicant.getCompanyId()));
-            industryApply.setExistLaborContract(form.getExistLaborContract()); // 使用传入的劳动合同关系参数
-            
-            // 更新数据库
-            applicationIndustryTalentMapper.updateById(industryApply);
+            // 执行更新
+            applicationIndustryTalentMapper.update(null, updateWrapper);
             
             return R.success("产业人才申请修改成功");
             

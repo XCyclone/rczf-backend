@@ -1,6 +1,7 @@
 package com.example.spba.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.spba.dao.ApplicationAgencyTalentMapper;
@@ -99,13 +100,17 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             // 设置基本申请信息
             agencyApply.setProjectId(form.getProjectId());
             agencyApply.setProjectName(form.getProjectName());
-            agencyApply.setCommunityId1(form.getCommunityId1());
-            agencyApply.setCommunityId2(form.getCommunityId2());
-            agencyApply.setCommunityId3(form.getCommunityId3());
-            agencyApply.setHouseType1(form.getHouseType1());
-            agencyApply.setHouseType2(form.getHouseType2());
-            agencyApply.setHouseType3(form.getHouseType3());
-            agencyApply.setHouseType4(form.getHouseType4());
+            
+            // 设置意向小区，空值设为 null
+            agencyApply.setCommunityId1(form.getCommunityId1() != null && !form.getCommunityId1().isEmpty() ? form.getCommunityId1() : null);
+            agencyApply.setCommunityId2(form.getCommunityId2() != null && !form.getCommunityId2().isEmpty() ? form.getCommunityId2() : null);
+            agencyApply.setCommunityId3(form.getCommunityId3() != null && !form.getCommunityId3().isEmpty() ? form.getCommunityId3() : null);
+            
+            // 设置意向房型，空值设为 null
+            agencyApply.setHouseType1(form.getHouseType1() != null ? form.getHouseType1() : null);
+            agencyApply.setHouseType2(form.getHouseType2() != null ? form.getHouseType2() : null);
+            agencyApply.setHouseType3(form.getHouseType3() != null ? form.getHouseType3() : null);
+            agencyApply.setHouseType4(form.getHouseType4() != null ? form.getHouseType4() : null);
             
             // 设置申请时间和状态
             agencyApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
@@ -118,9 +123,9 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             agencyApply.setApplicantId(userId);
             agencyApply.setApplicantZjhm(applicant.getIdNumber());
             agencyApply.setApplicantName(applicant.getName());
-            agencyApply.setApplicantCompanyId(applicant.getCompanyId());
+            agencyApply.setApplicantCompanyId(applicant.getCompanyId() != null && !applicant.getCompanyId().isEmpty() ? applicant.getCompanyId() : null);
             agencyApply.setApplicantCompanyUscc(getCompanyUscc(applicant.getCompanyId()));
-            agencyApply.setExistLaborContract(form.getExistLaborContract()); // 使用传入的劳动合同关系参数
+            agencyApply.setExistLaborContract(form.getExistLaborContract() != null ? form.getExistLaborContract() : null); // 使用传入的劳动合同关系参数
             
             // 插入数据库
             applicationAgencyTalentMapper.insert(agencyApply);
@@ -236,31 +241,26 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             }
 
             // 8. 更新申请记录
-            // 更新基本申请信息
-            agencyApply.setProjectId(form.getProjectId());
-            agencyApply.setProjectName(form.getProjectName());
-            agencyApply.setCommunityId1(form.getCommunityId1());
-            agencyApply.setCommunityId2(form.getCommunityId2());
-            agencyApply.setCommunityId3(form.getCommunityId3());
-            agencyApply.setHouseType1(form.getHouseType1());
-            agencyApply.setHouseType2(form.getHouseType2());
-            agencyApply.setHouseType3(form.getHouseType3());
-            agencyApply.setHouseType4(form.getHouseType4());
+            // 使用 UpdateWrapper 显式指定要更新的字段，确保 null 值也会被更新到数据库
+            UpdateWrapper<ApplicationAgencyTalent> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("application_id", applicationId);
             
-            // 更新申请时间和状态
-//            agencyApply.setApplyDate(Time.getNowTimeDate("yyyy-MM-dd"));
-//            agencyApply.setApplyTime(Time.getNowTimeDate("HH:mm:ss"));
-            agencyApply.setApplyStatus(1); // 1-提交/待审核
+            // 设置要更新的字段，包括 null 值
+            updateWrapper.set("project_id", form.getProjectId());
+            updateWrapper.set("project_name", form.getProjectName());
+            updateWrapper.set("community_id1", form.getCommunityId1() != null && !form.getCommunityId1().isEmpty() ? form.getCommunityId1() : null);
+            updateWrapper.set("community_id2", form.getCommunityId2() != null && !form.getCommunityId2().isEmpty() ? form.getCommunityId2() : null);
+            updateWrapper.set("community_id3", form.getCommunityId3() != null && !form.getCommunityId3().isEmpty() ? form.getCommunityId3() : null);
+            updateWrapper.set("house_type1", form.getHouseType1() != null ? form.getHouseType1() : null);
+            updateWrapper.set("house_type2", form.getHouseType2() != null ? form.getHouseType2() : null);
+            updateWrapper.set("house_type3", form.getHouseType3() != null ? form.getHouseType3() : null);
+            updateWrapper.set("house_type4", form.getHouseType4() != null ? form.getHouseType4() : null);
+            updateWrapper.set("exist_labor_contract", form.getExistLaborContract() != null ? form.getExistLaborContract() : null);
+            updateWrapper.set("applicant_company_id", applicant.getCompanyId() != null && !applicant.getCompanyId().isEmpty() ? applicant.getCompanyId() : null);
+            updateWrapper.set("apply_status", 1); // 1-提交/待审核
             
-            // 更新申请人相关信息
-            agencyApply.setApplicantZjhm(applicant.getIdNumber());
-            agencyApply.setApplicantName(applicant.getName());
-            agencyApply.setApplicantCompanyId(applicant.getCompanyId());
-            agencyApply.setApplicantCompanyUscc(getCompanyUscc(applicant.getCompanyId()));
-            agencyApply.setExistLaborContract(form.getExistLaborContract()); // 使用传入的劳动合同关系参数
-            
-            // 更新数据库
-            applicationAgencyTalentMapper.updateById(agencyApply);
+            // 执行更新
+            applicationAgencyTalentMapper.update(null, updateWrapper);
             
             return R.success("机关单位申请修改成功");
             

@@ -10,7 +10,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>rczf-int-api</artifactId>
+    <artifactId>rczf-int</artifactId>
     <version>1.0.0</version>
     <description>Spring Boot 通用管理系统 API</description>
     <properties>
