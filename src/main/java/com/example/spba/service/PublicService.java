@@ -2,6 +2,7 @@ package com.example.spba.service;
 
 import com.example.spba.domain.dto.KeyValueItemDTO;
 import com.example.spba.domain.dto.ProjectInfoDTO;
+import com.example.spba.domain.dto.HouseInfoQueryDTO;
 import com.example.spba.utils.R;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public interface PublicService {
     /**
      * 公共查询房屋信息列表（支持模糊搜索）
      * @param queryDTO 查询条件
-     * @return 房屋信息列表
+     * @return 房屋信息分页数据
      */
-    R queryPublicHouseInfoList(Object queryDTO);
+    R queryPublicHouseInfoList(HouseInfoQueryDTO queryDTO);
 }

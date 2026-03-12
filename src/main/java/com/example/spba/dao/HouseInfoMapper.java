@@ -2,6 +2,7 @@ package com.example.spba.dao;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.spba.domain.dto.HouseInfoDTO;
+import com.example.spba.domain.dto.HouseInfoQueryDTO;
 import com.example.spba.domain.entity.HouseInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -156,8 +157,14 @@ public interface HouseInfoMapper extends BaseMapper<HouseInfo> {
             "<if test=\"query.communityName != null and query.communityName != ''\">" +
             "AND ci.community_name LIKE CONCAT('%', #{query.communityName}, '%')" +
             "</if>" +
+            "<if test=\"query.location != null and query.location.size() > 0\">" +
+            "AND ci.community_location_tag IN " +
+            "<foreach item='location' collection='query.location' open='(' separator=',' close=')'>" +
+            "#{location}" +
+            "</foreach>" +
+            "</if>" +
             "</if>" +
             "ORDER BY h.last_update_date DESC, h.last_update_time DESC" +
             "</script>")
-    List<HouseInfoDTO> selectPublicHouseInfoList(@Param("query") Object query);
+    List<HouseInfoDTO> selectPublicHouseInfoList(@Param("query") HouseInfoQueryDTO query);
 }

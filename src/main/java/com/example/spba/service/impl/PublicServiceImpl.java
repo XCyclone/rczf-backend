@@ -3,6 +3,7 @@ package com.example.spba.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.spba.dao.*;
 import com.example.spba.domain.dto.HouseInfoDTO;
+import com.example.spba.domain.dto.HouseInfoQueryDTO;
 import com.example.spba.domain.dto.KeyValueItemDTO;
 import com.example.spba.domain.dto.ProjectInfoDTO;
 import com.example.spba.domain.entity.*;
@@ -265,19 +266,42 @@ public class PublicServiceImpl implements PublicService {
     }
 
     @Override
-    public R queryPublicHouseInfoList(Object queryDTO) {
+    public R queryPublicHouseInfoList(HouseInfoQueryDTO queryDTO) {
         try {
-            logger.info("[公共查询房屋信息] 开始查询房屋信息列表");
+            logger.info("[公共查询房屋信息] 开始查询房屋信息列表，page: {}, size: {}",
+                    queryDTO.getPage(), queryDTO.getSize());
+
+            // 设置默认分页参数
+            if (queryDTO.getPage() == null || queryDTO.getPage() < 1) {
+                queryDTO.setPage(1);
+            }
+            if (queryDTO.getSize() == null || queryDTO.getSize() < 1) {
+                queryDTO.setSize(10);
+            }
 
             // 调用 Mapper 查询全部数据
             List<HouseInfoDTO> allList = houseInfoMapper.selectPublicHouseInfoList(queryDTO);
             logger.info("[公共查询房屋信息] 查询完成，共找到 {} 条记录", allList.size());
 
+            // 计算总数
+            int total = allList.size();
+
+            // 手动分页
+            int page = queryDTO.getPage();
+            int size = queryDTO.getSize();
+            int fromIndex = (page - 1) * size;
+            int toIndex = Math.min(fromIndex + size, total);
+
+            List<HouseInfoDTO> pageList = new ArrayList<>();
+            if (fromIndex < total) {
+                pageList = allList.subList(fromIndex, toIndex);
+            }
+
             // 为每套房子填充图片 URL 列表
-            for (HouseInfoDTO houseInfo : allList) {
+            for (HouseInfoDTO houseInfo : pageList) {
                 // 查询户型图图片 URL 列表
                 if (houseInfo.getHouseLayoutPicId() != null && !houseInfo.getHouseLayoutPicId().isEmpty()) {
-                    List<com.example.spba.domain.entity.FileInfo> layoutPics = fileInfoMapper.selectByRelId(houseInfo.getHouseLayoutPicId());
+                    List<FileInfo> layoutPics = fileInfoMapper.selectByRelId(houseInfo.getHouseLayoutPicId());
                     List<String> layoutPicUrls = new ArrayList<>();
                     if (layoutPics != null && !layoutPics.isEmpty()) {
                         for (FileInfo pic : layoutPics) {
@@ -304,8 +328,17 @@ public class PublicServiceImpl implements PublicService {
                 }
             }
 
-            logger.info("[公共查询房屋信息] 查询成功，返回 {} 条记录", allList.size());
-            return R.success(allList);
+            // 构造分页响应数据
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", pageList);
+            result.put("total", total);
+            result.put("page", page);
+            result.put("size", size);
+            result.put("pages", (int) Math.ceil((double) total / size));
+
+            logger.info("[公共查询房屋信息] 查询成功，返回 {} 条记录，总记录数：{}，页码：{}，每页大小：{}",
+                    pageList.size(), total, page, size);
+            return R.success(result);
 
         } catch (Exception e) {
             logger.error("[公共查询房屋信息] 查询失败，异常：{}", e.getMessage(), e);

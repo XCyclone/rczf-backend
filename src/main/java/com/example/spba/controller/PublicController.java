@@ -3,6 +3,7 @@ package com.example.spba.controller;
 import com.example.spba.service.CaptchaService;
 import com.example.spba.service.ChooseHouseService;
 import com.example.spba.service.PublicService;
+import com.example.spba.domain.dto.HouseInfoQueryDTO;
 import com.example.spba.utils.R;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,10 +119,10 @@ public class PublicController {
      * POST /public/query/house
      *
      * @param queryDTO 查询条件
-     * @return 房屋信息列表
+     * @return 房屋信息分页数据
      */
     @PostMapping("/query/house")
-    public R queryPublicHouseInfoList(@RequestBody Object queryDTO) {
+    public R queryPublicHouseInfoList(@RequestBody HouseInfoQueryDTO queryDTO) {
         try {
             logger.info("[公共查询房屋信息] 开始查询房屋信息列表");
 
