@@ -3,6 +3,9 @@ package com.example.spba.service;
 import com.example.spba.domain.dto.KeyValueItemDTO;
 import com.example.spba.domain.dto.ProjectInfoDTO;
 import com.example.spba.domain.dto.HouseInfoQueryDTO;
+import com.example.spba.domain.dto.CommunityCarouselDTO;
+import com.example.spba.domain.dto.CommunityDetailDTO;
+import com.example.spba.domain.dto.PortalContentDTO;
 import com.example.spba.utils.R;
 
 import java.util.List;
@@ -70,4 +73,30 @@ public interface PublicService {
      * @return 房屋信息分页数据
      */
     R queryPublicHouseInfoList(HouseInfoQueryDTO queryDTO);
+    
+    /**
+     * 查询小区轮播图列表
+     * @return 小区轮播图列表
+     */
+    R queryCommunityCarouselList();
+    
+    /**
+     * 获取小区详细信息
+     * @param communityId ID
+     * @return 小区详细信息
+     */
+    R queryCommunityDetail(String communityId);
+    
+    /**
+     * 获取通知公告详细信息
+     * @return 通知公告详细信息
+     */
+    R queryPortalContent();
+    
+    /**
+     * 根据 ID 获取通知公告详细信息
+     * @param id 通知公告 ID
+     * @return 通知公告详细信息
+     */
+    R queryPortalContentById(Integer id);
 }

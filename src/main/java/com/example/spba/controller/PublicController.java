@@ -4,6 +4,9 @@ import com.example.spba.service.CaptchaService;
 import com.example.spba.service.ChooseHouseService;
 import com.example.spba.service.PublicService;
 import com.example.spba.domain.dto.HouseInfoQueryDTO;
+import com.example.spba.domain.dto.CommunityCarouselDTO;
+import com.example.spba.domain.dto.CommunityDetailDTO;
+import com.example.spba.domain.dto.PortalContentDTO;
 import com.example.spba.utils.R;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -151,4 +155,90 @@ public class PublicController {
             return R.error("查询失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 查询小区轮播图列表
+     * POST /public/query/community/list
+     *
+     * @return 小区轮播图列表
+     */
+    @PostMapping("/query/community/list")
+    public R queryCommunityList() {
+        try {
+            logger.info("[查询小区轮播图] 开始查询小区轮播图列表");
+
+            // 调用服务查询小区轮播图
+            return publicService.queryCommunityCarouselList();
+
+        } catch (Exception e) {
+            logger.error("[查询小区轮播图] 查询失败，异常：{}", e.getMessage(), e);
+            return R.error("查询小区轮播图失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取小区详细信息
+     * POST /public/query/community/info
+     *
+     * @param params
+     * @return 小区详细信息列表
+     */
+    @PostMapping("/query/community/info")
+    public R queryCommunityInfo(@RequestBody(required = false) Map<String,String> params) {
+        try {
+            String communityId = params.get("communityId");
+            logger.info("[获取小区详细信息] 开始查询，communityId: {}", communityId);
+
+            // 调用服务查询小区详细信息
+            return publicService.queryCommunityDetail(communityId);
+
+        } catch (Exception e) {
+            logger.error("[获取小区详细信息] 查询失败，params: {}, 异常：{}", params, e.getMessage(), e);
+            return R.error("获取小区详细信息失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取通知公告信息
+     * POST /public/query/portalContent/list
+     *
+     * @return 通知公告信息
+     */
+    @PostMapping("/query/portalContent/list")
+    public R queryPortalContent() {
+        try {
+            logger.info("[获取通知公告] 开始查询通知公告详细信息");
+
+            // 调用服务查询通知公告
+            return publicService.queryPortalContent();
+
+        } catch (Exception e) {
+            logger.error("[获取通知公告] 查询失败，异常：{}", e.getMessage(), e);
+            return R.error("获取通知公告失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据 ID 获取通知公告详细信息
+     * POST /public/query/portalContent/info
+     *
+     * @param  params
+     * @return 通知公告详细信息
+     */
+    @PostMapping("/query/portalContent/info")
+    public R queryPortalContentInfo(@RequestBody(required = false) Map<String,Integer> params) {
+        try {
+            Integer id = params.get("id");
+            logger.info("[获取通知公告详情] 开始查询，id: {}", id);
+
+            // 调用服务查询通知公告详情
+            return publicService.queryPortalContentById(id);
+
+        } catch (Exception e) {
+            logger.error("[获取通知公告详情] 查询失败，params: {}, 异常：{}", params, e.getMessage(), e);
+            return R.error("获取通知公告详情失败：" + e.getMessage());
+        }
+    }
+
+
 }

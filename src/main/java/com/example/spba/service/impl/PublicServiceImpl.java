@@ -6,6 +6,9 @@ import com.example.spba.domain.dto.HouseInfoDTO;
 import com.example.spba.domain.dto.HouseInfoQueryDTO;
 import com.example.spba.domain.dto.KeyValueItemDTO;
 import com.example.spba.domain.dto.ProjectInfoDTO;
+import com.example.spba.domain.dto.CommunityCarouselDTO;
+import com.example.spba.domain.dto.CommunityDetailDTO;
+import com.example.spba.domain.dto.PortalContentDTO;
 import com.example.spba.domain.entity.*;
 import com.example.spba.service.PublicService;
 import com.example.spba.utils.R;
@@ -48,6 +51,9 @@ public class PublicServiceImpl implements PublicService {
 
     @Autowired
     private FileInfoMapper fileInfoMapper;
+
+    @Autowired
+    private InfoPortalContentMapper infoPortalContentMapper;
 
     @Override
     public List<Map<String, String>> convertKeyValueToValueText(Map<String, String> keyValueMap) {
@@ -343,6 +349,296 @@ public class PublicServiceImpl implements PublicService {
         } catch (Exception e) {
             logger.error("[公共查询房屋信息] 查询失败，异常：{}", e.getMessage(), e);
             return R.error("查询房屋信息失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public R queryCommunityCarouselList() {
+        try {
+            logger.info("[查询小区轮播图] 开始查询小区轮播图列表");
+
+            // 1. 查询所有有效的小区（delete_status = '0'）
+            QueryWrapper<CommunityInfo> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("delete_status", "0")
+//                    .isNotNull("community_pic_group_id")
+//                    .ne("community_pic_group_id", "")
+                    .orderByDesc("last_update_date", "last_update_time");
+
+            List<CommunityInfo> communities = communityInfoMapper.selectList(queryWrapper);
+            logger.info("[查询小区轮播图] 查询到 {} 个小区", communities.size());
+
+            if (communities == null || communities.isEmpty()) {
+                logger.info("[查询小区轮播图] 未找到小区数据");
+                return R.success(new ArrayList<>());
+            }
+
+            // 2. 构建返回结果
+            List<CommunityCarouselDTO> resultList = new ArrayList<>();
+            for (CommunityInfo community : communities) {
+                CommunityCarouselDTO dto = new CommunityCarouselDTO();
+                dto.setCommunityId(community.getId());
+                dto.setCommunityName(community.getCommunityName());
+
+                // 3. 查询小区图片，取第一张
+                if (community.getCommunityPicGroupId() != null && !community.getCommunityPicGroupId().isEmpty()) {
+                    List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getCommunityPicGroupId());
+                    if (pics != null && !pics.isEmpty()) {
+                        dto.setCommunityPic(pics.get(0).getFileUrl());
+                    } else {
+                        dto.setCommunityPic("");
+                    }
+                } else {
+                    dto.setCommunityPic("");
+                }
+
+                resultList.add(dto);
+            }
+
+            logger.info("[查询小区轮播图] 查询成功，返回 {} 条记录", resultList.size());
+            return R.success(resultList);
+
+        } catch (Exception e) {
+            logger.error("[查询小区轮播图] 查询失败，异常：{}", e.getMessage(), e);
+            return R.error("查询小区轮播图失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public R queryCommunityDetail(String communityId) {
+        try {
+            logger.info("[获取小区详细信息] 开始查询，communityId: {}", communityId);
+
+            // 1. 参数校验
+            if (communityId == null || communityId.isEmpty()) {
+                logger.warn("[获取小区详细信息] 小区 ID 为空");
+                return R.error("小区 ID 不能为空");
+            }
+
+            // 2. 查询小区信息
+            CommunityInfo community = communityInfoMapper.selectById(communityId);
+            if (community == null) {
+                logger.warn("[获取小区详细信息] 小区不存在，communityId: {}", communityId);
+                return R.error("小区不存在");
+            }
+
+            // 3. 构建返回结果
+            CommunityDetailDTO detail = new CommunityDetailDTO();
+            detail.setCommunityName(community.getCommunityName());
+            detail.setHouseDesc(community.getCommunityDesc());
+            detail.setCommunityLocation(community.getCommunityLocation());
+            detail.setTag1(community.getTag1());
+            detail.setTag2(community.getTag2());
+            detail.setTag3(community.getTag3());
+            detail.setHasZeroBedroom(community.getHasZeroBedroom());
+            detail.setHasOneBedroom(community.getHasOneBedroom());
+            detail.setHasTwoBedroom(community.getHasTwoBedroom());
+            detail.setHasThreeBedroom(community.getHasThreeBedroom());
+
+            // 4. 查询小区图片列表
+            if (community.getCommunityPicGroupId() != null && !community.getCommunityPicGroupId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getCommunityPicGroupId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setCommunityPicList(picUrls);
+            } else {
+                detail.setCommunityPicList(new ArrayList<>());
+            }
+
+            // 5. 查询开间户型图和实景图
+            if (community.getZerobedroomLayoutPicId() != null && !community.getZerobedroomLayoutPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getZerobedroomLayoutPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setZerobedroomLayoutPicList(picUrls);
+            } else {
+                detail.setZerobedroomLayoutPicList(new ArrayList<>());
+            }
+
+            if (community.getZerobedroomPhotoPicId() != null && !community.getZerobedroomPhotoPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getZerobedroomPhotoPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setZerobedroomPhotoPicList(picUrls);
+            } else {
+                detail.setZerobedroomPhotoPicList(new ArrayList<>());
+            }
+
+            // 6. 查询一居户型图和实景图
+            if (community.getOnebedroomLayoutPicId() != null && !community.getOnebedroomLayoutPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getOnebedroomLayoutPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setOnebedroomLayoutPicList(picUrls);
+            } else {
+                detail.setOnebedroomLayoutPicList(new ArrayList<>());
+            }
+
+            if (community.getOnebedroomPhotoPicId() != null && !community.getOnebedroomPhotoPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getOnebedroomPhotoPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setOnebedroomPhotoPicList(picUrls);
+            } else {
+                detail.setOnebedroomPhotoPicList(new ArrayList<>());
+            }
+
+            // 7. 查询二居户型图和实景图
+            if (community.getTwobedroomLayoutPicId() != null && !community.getTwobedroomLayoutPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getTwobedroomLayoutPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setTwobedroomLayoutPicList(picUrls);
+            } else {
+                detail.setTwobedroomLayoutPicList(new ArrayList<>());
+            }
+
+            if (community.getTwobedroomPhotoPicId() != null && !community.getTwobedroomPhotoPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getTwobedroomPhotoPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setTwobedroomPhotoPicList(picUrls);
+            } else {
+                detail.setTwobedroomPhotoPicList(new ArrayList<>());
+            }
+
+            // 8. 查询三居户型图和实景图
+            if (community.getThreebedroomLayoutPicId() != null && !community.getThreebedroomLayoutPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getThreebedroomLayoutPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setThreebedroomLayoutPicList(picUrls);
+            } else {
+                detail.setThreebedroomLayoutPicList(new ArrayList<>());
+            }
+
+            if (community.getThreebedroomPhotoPicId() != null && !community.getThreebedroomPhotoPicId().isEmpty()) {
+                List<FileInfo> pics = fileInfoMapper.selectByRelId(community.getThreebedroomPhotoPicId());
+                List<String> picUrls = new ArrayList<>();
+                if (pics != null && !pics.isEmpty()) {
+                    for (FileInfo pic : pics) {
+                        picUrls.add(pic.getFileUrl());
+                    }
+                }
+                detail.setThreebedroomPhotoPicList(picUrls);
+            } else {
+                detail.setThreebedroomPhotoPicList(new ArrayList<>());
+            }
+
+            // 9. 构造返回结果（列表格式）
+            List<CommunityDetailDTO> resultList = new ArrayList<>();
+            resultList.add(detail);
+
+            logger.info("[获取小区详细信息] 查询成功，communityId: {}", communityId);
+            return R.success(resultList);
+
+        } catch (Exception e) {
+            logger.error("[获取小区详细信息] 查询失败，communityId: {}, 异常：{}", communityId, e.getMessage(), e);
+            return R.error("获取小区详细信息失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public R queryPortalContent() {
+        try {
+            logger.info("[获取通知公告] 开始查询通知公告详细信息");
+
+            // 1. 查询 section_id 为'1'的数据
+            QueryWrapper<InfoPortalContent> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("section_id", "1")
+                    .eq("del_status", 0)  // 未删除
+                    .eq("status", 1)       // 已发布
+                    .orderByDesc("publish_date", "publish_time");
+
+            List<InfoPortalContent> contentList = infoPortalContentMapper.selectList(queryWrapper);
+            
+            if (contentList == null || contentList.isEmpty()) {
+                logger.info("[获取通知公告] 未找到通知公告数据");
+                return R.success(new ArrayList<>());
+            }
+
+            // 2. 构建返回结果列表
+            List<PortalContentDTO> resultList = new ArrayList<>();
+            for (InfoPortalContent content : contentList) {
+                PortalContentDTO result = new PortalContentDTO();
+                result.setPublishDate(content.getPublishDate());
+                result.setPublishTime(content.getPublishTime());
+                result.setTitle(content.getTitle());
+                resultList.add(result);
+            }
+
+            logger.info("[获取通知公告] 查询成功，共找到 {} 条记录", resultList.size());
+            return R.success(resultList);
+
+        } catch (Exception e) {
+            logger.error("[获取通知公告] 查询失败，异常：{}", e.getMessage(), e);
+            return R.error("获取通知公告失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public R queryPortalContentById(Integer id) {
+        try {
+            logger.info("[获取通知公告详情] 开始查询，id: {}", id);
+
+            // 1. 参数校验
+            if (id == null || id <= 0) {
+                logger.warn("[获取通知公告详情] ID 不合法，id: {}", id);
+                return R.error("ID 不合法");
+            }
+
+            // 2. 查询通知公告详细信息
+            InfoPortalContent content = infoPortalContentMapper.selectById(id);
+            
+            if (content == null) {
+                logger.info("[获取通知公告详情] 未找到通知公告数据，id: {}", id);
+                return R.success(null);
+            }
+
+            // 3. 构建返回结果
+            PortalContentDTO result = new PortalContentDTO();
+            result.setPublishDate(content.getPublishDate());
+            result.setPublishTime(content.getPublishTime());
+            result.setTitle(content.getTitle());
+            result.setContent(content.getContent());
+
+            logger.info("[获取通知公告详情] 查询成功，id: {}, title: {}", id, content.getTitle());
+            return R.success(result);
+
+        } catch (Exception e) {
+            logger.error("[获取通知公告详情] 查询失败，id: {}, 异常：{}", id, e.getMessage(), e);
+            return R.error("获取通知公告详情失败：" + e.getMessage());
         }
     }
 }

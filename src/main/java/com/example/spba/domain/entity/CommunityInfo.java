@@ -50,7 +50,7 @@ public class CommunityInfo implements Serializable {
     /**
      * 小区所属片区标签
      */
-    private Integer communityLocationTag;
+    private String communityLocationTag;
 
     /**
      * 小区地址
