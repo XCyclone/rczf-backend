@@ -50,6 +50,11 @@ public class ChooseHouseTask implements Serializable {
         private String projectId;
 
         /**
+         * 申请 ID
+         */
+        private String applicationId;
+
+        /**
          * 申请时间
          */
         private String applyDateTime;

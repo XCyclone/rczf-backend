@@ -64,7 +64,7 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+            String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -218,11 +218,11 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
                 return R.error("该项目暂未开启申请");
             }
             
-//            // 校验申请时间区间
-//            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
-//            if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
-//                return R.error("当前不在该项目的申请时间范围内");
-//            }
+            // 校验申请时间区间
+            String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
+            if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
+                return R.error("当前不在该项目的申请时间范围内");
+            }
 
             // 5. 查询申请人信息
             BusinessUser applicant = businessUserMapper.selectById(userId);
@@ -278,7 +278,7 @@ public class ApplicationAgencyServiceImpl implements ApplicationAgencyService {
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
 
             // 如果开始时间为空，则认为无开始限制

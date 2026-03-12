@@ -64,6 +64,9 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
     @Autowired
     private BusinessEnterpriseAddressMapper businessEnterpriseAddressMapper;
 
+    @Autowired
+    private EnterpriseBlacklistMapper enterpriseBlacklistMapper;
+
     /**
      * 根据统一社会信用代码查询企业
      * @param uscc 统一社会信用代码
@@ -163,6 +166,12 @@ public class BusinessEnterpriseServiceImpl implements BusinessEnterpriseService 
         BusinessEnterprise existByEnterpriseName = businessEnterpriseMapper.selectOne(wrapper);
         if (existByEnterpriseName != null) {
             return R.error("该企业名称已被注册");
+        }
+
+        QueryWrapper<EnterpriseBlacklist> bwrapper = new QueryWrapper<>();
+        bwrapper.eq("enterprise_name", form.getEnterpriseName());
+        if (enterpriseBlacklistMapper.selectCount(bwrapper) > 0){
+            return R.error("该企业名称已被加入黑名单");
         }
 
         // 创建企业申请实体

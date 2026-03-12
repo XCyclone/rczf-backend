@@ -31,11 +31,6 @@ public class FileServiceImpl implements FileService {
     @Autowired
     private FileInfoMapper fileInfoMapper;
 
-
-    @Override
-    public List<Map<String,Object>> selectFileInfoListByRelationId(String relationId){
-        return fileInfoMapper.selectById(relationId);
-    }
     
     @Override
     public IPage<FileInfoQuery> selectFileInfoListByRelationIdWithPage(IPage<FileInfoQuery> page, String relationId) {

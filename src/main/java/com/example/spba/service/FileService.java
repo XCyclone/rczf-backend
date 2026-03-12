@@ -11,12 +11,6 @@ import java.util.Map;
 
 public interface FileService {
 
-    /**
-     * 根据关联 ID 查询文件列表（不分页）
-     * @param relationId 关联 ID
-     * @return 文件列表
-     */
-    List<Map<String,Object>> selectFileInfoListByRelationId(String relationId);
     
     /**
      * 根据关联 ID 查询文件列表（分页）

@@ -60,7 +60,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+            String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -217,7 +217,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
             }
             
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyy-MM-dd");
+            String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
@@ -278,7 +278,7 @@ public class ApplicationLeadingServiceImpl implements ApplicationLeadingService 
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
             
             // 如果开始时间为空，则认为无开始限制

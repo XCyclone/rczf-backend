@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
@@ -60,6 +61,10 @@ public class BusinessUserServiceImpl implements BusinessUserService
     
     @Autowired
     private ApplicationLeadingTalentMapper applicationLeadingTalentMapper;
+
+    @Autowired
+    private RoleUserRelMapper roleUserRelMapper;
+
     @Override
     public BusinessUser getByMobile(String mobile)
     {
@@ -112,8 +117,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
         apply.setMobile(form.getMobile());
         apply.setRegType(form.getRegType());
         apply.setCompanyId(form.getCompanyId());
-        apply.setCompanyName(form.getCompanyName());
-        
+
         // 设置注册日期和时间
         apply.setRegDate(Time.getNowTimeDate("yyyy-MM-dd"));
         apply.setRegTime(Time.getNowTimeDate("HH:mm:ss"));
@@ -189,7 +193,6 @@ public class BusinessUserServiceImpl implements BusinessUserService
         user.setRegTime(apply.getRegTime());
         user.setRegType(apply.getRegType());
         user.setCompanyId(apply.getCompanyId());
-        user.setCompanyName(apply.getCompanyName());
         user.setStatus(1); // 审核通过
         user.setEverLogged(0); // 未登录过
         
@@ -334,7 +337,10 @@ public class BusinessUserServiceImpl implements BusinessUserService
     public Object getUserInfoWithApprovalStatus(String userId) {
         // 获取用户基本信息
         BusinessUser userInfo = businessUserMapper.selectById(userId);
-        
+
+        QueryWrapper wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("id", userInfo.getCompanyId());
+        String enterpriseName = businessEnterpriseMapper.selectOne(wrapper1).getEnterpriseName();
         if (userInfo == null) {
             return null;
         }
@@ -348,8 +354,8 @@ public class BusinessUserServiceImpl implements BusinessUserService
         int pendingUpdateCount = businessUserApplyMapper.selectCount(wrapper);
         
         // 使用BeanMap将对象转换为Map
-        org.springframework.cglib.beans.BeanMap beanMap = org.springframework.cglib.beans.BeanMap.create(userInfo);
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        BeanMap beanMap = BeanMap.create(userInfo);
+        Map<String, Object> result = new HashMap<>();
         
         // 复制BeanMap中的所有属性到结果Map
         for (Object key : beanMap.keySet()) {
@@ -359,7 +365,7 @@ public class BusinessUserServiceImpl implements BusinessUserService
         
         // 添加审批状态标志（根据数量判断）
         result.put("updateFlag", pendingUpdateCount > 0 ? 1 : 0); // 0表示无待审批，1表示有待审批
-        
+        result.put("companyName", enterpriseName);
         return result;
     }
     
@@ -456,7 +462,6 @@ public class BusinessUserServiceImpl implements BusinessUserService
         // 复制要修改的信息（只包含现在支持的字段）
         apply.setHighestEdu(form.getHighestEdu());
         apply.setNationality(form.getNationality());
-        apply.setCompanyName(form.getCompanyName());
         apply.setRegType(form.getRegType());
         
         // 保持原有信息
@@ -511,9 +516,23 @@ public class BusinessUserServiceImpl implements BusinessUserService
             // 只更新现在支持的字段
             updatedUser.setHighestEdu(apply.getHighestEdu());
             updatedUser.setNationality(apply.getNationality());
-            updatedUser.setCompanyName(apply.getCompanyName());
             updatedUser.setRegType(apply.getRegType());
 
+            QueryWrapper userRoleWrapper = new QueryWrapper<>();
+            userRoleWrapper.eq("user_id", apply.getBusinessUserId());
+            roleUserRelMapper.delete(userRoleWrapper);
+            RoleUserRel roleUserRel = new RoleUserRel();
+            roleUserRel.setUserId(apply.getBusinessUserId());
+            if(apply.getRegType() == 1){
+                roleUserRel.setRoleId("R0004");
+            }else if(apply.getRegType() == 2){
+                roleUserRel.setRoleId("R0005");
+            }else if (apply.getRegType() == 3){
+                roleUserRel.setRoleId("R0006");
+            }else if (apply.getRegType() == 4){
+                roleUserRel.setRoleId("R0007");
+            }
+            roleUserRelMapper.insert(roleUserRel);
             BusinessUser user = businessUserMapper.selectById(apply.getBusinessUserId());
             // 保持原有信息
             updatedUser.setName(user.getName());

@@ -57,9 +57,6 @@ public class BusinessUserApply implements Serializable {
     /** 工作单位ID */
     private String companyId;
 
-    /** 工作单位名称 */
-    private String companyName;
-
     /** 当前状态：0-提交/待审核；1-审核通过；2-审核拒绝 */
     private Integer status;
 

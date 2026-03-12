@@ -18,8 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Token用户信息拦截器
- * 在preHandle中获取用户信息并存储到用户上下文中
+ * Token 用户信息拦截器
+ * 在 preHandle 中获取用户信息并存储到用户上下文中
  */
 public class TokenUserInfoInterceptor implements HandlerInterceptor {
 
@@ -31,47 +31,45 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         try {
-            // 从请求头获取token
+            // 从请求头获取 token
             String token = extractTokenFromRequest(request);
             
             if (StringUtils.hasText(token)) {
-                // 验证token是否有效
-                if (!userTokenService.isValidToken(token)) {
-                    logger.warn("无效的token: {}", token);
-                    return handleTokenError(response, "Token无效或已过期");
+                // 使用 Sa-Token 验证 token 有效性并获取登录 ID
+                Object loginId = StpUtil.getLoginIdByToken(token);
+               if (loginId == null) {
+                    logger.warn("无效的 token: {}", token);
+                   return handleTokenError(response, "Token 无效或已过期");
                 }
 
-                // 检查token是否即将过期
-                long expireTime = userTokenService.getTokenExpireTime(token);
-                if (expireTime <= 0) {
-                    logger.warn("token已过期: {}", token);
-                    return handleTokenError(response, "Token已过期");
-                }
+                // 注意：不需要额外检查 token 是否过期
+                // 因为 getLoginIdByToken() 已经验证了 token 的有效性（包括是否过期）
+                // 如果能获取到 loginId，说明 token 是有效的且未过期
 
                 // 获取用户完整信息
-                UserInfo userInfo = userTokenService.getUserInfoByToken(token);
+                UserInfo userInfo = getUserInfoByLoginId(loginId.toString());
                 
-                // 将用户信息存储到ThreadLocal和Request Attribute中
+                // 将用户信息存储到 ThreadLocal 和 Request Attribute 中
                 storeUserInfoToContext(userInfo);
-                // 同时存储到Request Attribute供@RequestAttribute使用
+                // 同时存储到 Request Attribute 供@RequestAttribute 使用
                 RequestAttributeUtil.setCurrentUserInfo(userInfo);
                 
-                logger.debug("成功获取用户信息 - 用户ID: {}, 用户名: {}", userInfo.getId(), userInfo.getUsername());
+                logger.debug("成功获取用户信息 - 用户 ID: {}, 用户名：{}", userInfo.getId(), userInfo.getUsername());
             } else {
-                // 如果没有token，检查是否为免登录接口
+                // 如果没有 token，检查是否为免登录接口
                 String requestURI = request.getRequestURI();
                 if (!isPublicEndpoint(requestURI)) {
-                    logger.warn("缺少访问凭证 - 请求路径: {}", requestURI);
+                    logger.warn("缺少访问凭证 - 请求路径：{}", requestURI);
                     return handleTokenError(response, "请提供有效的访问凭证");
                 }
             }
 
             return true;
         } catch (Exception e) {
-            logger.error("拦截器处理异常: {}", e.getMessage(), e);
+            logger.error("拦截器处理异常：{}", e.getMessage(), e);
             UserContextUtil.clear();
             
-            // 特殊处理Token过期情况
+            // 特殊处理 Token 过期情况
             if (e.getMessage() != null && e.getMessage().startsWith("TOKEN_EXPIRED:")) {
                 String errorMessage = e.getMessage().substring("TOKEN_EXPIRED:".length());
                 return handleTokenExpiredError(response, errorMessage);
@@ -83,47 +81,61 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        // 请求完成后清理ThreadLocal和Request Attribute，防止内存泄漏
+        // 请求完成后清理 ThreadLocal 和 Request Attribute，防止内存泄漏
         UserContextUtil.clear();
         RequestAttributeUtil.clear();
     }
 
     /**
-     * 从请求中提取token
-     * @param request HTTP请求
-     * @return token字符串
+     * 从请求中提取 token
+     * @param request HTTP 请求
+     * @return token 字符串
      */
     private String extractTokenFromRequest(HttpServletRequest request) {
-        // 方式1: 从Authorization头获取Bearer token
+        // 方式 1: 从 Authorization 头获取 Bearer token
         String authHeader = request.getHeader("Authorization");
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
 
-        // 方式2: 从自定义请求头获取
+        // 方式 2: 从自定义请求头获取
         String xTokenHeader = request.getHeader("X-Auth-Token");
         if (StringUtils.hasText(xTokenHeader)) {
             return xTokenHeader;
         }
 
-        // 方式3: 从Sa-Token默认header获取
+        // 方式 3: 从 Sa-Token 默认 header 获取
         String saTokenHeader = request.getHeader("Sa-Token");
         if (StringUtils.hasText(saTokenHeader)) {
             return saTokenHeader;
         }
-        // 方式3: 从Sa-Token默认header获取
+        // 方式 4: 从自定义 token header 获取
         String tokenHeader = request.getHeader("token");
         if (StringUtils.hasText(tokenHeader)) {
             return tokenHeader;
         }
 
-        // 方式4: 从请求参数获取
+        // 方式 5: 从请求参数获取
         String tokenParam = request.getParameter("token");
         if (StringUtils.hasText(tokenParam)) {
             return tokenParam;
         }
 
         return null;
+    }
+
+    /**
+     * 根据登录 ID 获取用户信息
+     * @param loginId 登录 ID
+     * @return 用户信息
+     */
+    private UserInfo getUserInfoByLoginId(String loginId) {
+        try {
+            return userTokenService.getUserInfoById(loginId);
+        } catch (Exception e) {
+            logger.error("获取用户信息失败，loginId: {}, error: {}", loginId, e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -134,14 +146,12 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         if (userInfo != null) {
             UserContextUtil.setUserId(userInfo.getId());
             UserContextUtil.setUserName(userInfo.getUsername());
-            // 在request中设置用户信息属性，供@RequestAttribute使用
-            // 注意：这种方式需要配合ServletRequestAttributes使用
         }
     }
 
     /**
-     * 判断是否为公共接口（不需要token验证）
-     * @param requestURI 请求URI
+     * 判断是否为公共接口（不需要 token 验证）
+     * @param requestURI 请求 URI
      * @return 是否为公共接口
      */
     private boolean isPublicEndpoint(String requestURI) {
@@ -167,7 +177,7 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         if (requestURI.matches(".*/public/.*")) {
             return true;
         }
-        // 特殊处理/public/**路径
+        // 特殊处理/api/**路径
         if (requestURI.matches(".*/api/.*")) {
             return true;
         }
@@ -176,8 +186,8 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
     }
     
     /**
-     * 处理token错误，直接向客户端返回JSON格式的错误响应
-     * @param response HttpServletResponse响应对象
+     * 处理 token 错误，直接向客户端返回 JSON 格式的错误响应
+     * @param response HttpServletResponse 响应对象
      * @param errorMessage 错误信息
      * @return false 表示拦截请求
      */
@@ -202,8 +212,8 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
     }
     
     /**
-     * 专门处理Token过期错误，返回友好的提示信息
-     * @param response HttpServletResponse响应对象
+     * 专门处理 Token 过期错误，返回友好的提示信息
+     * @param response HttpServletResponse 响应对象
      * @param errorMessage 错误信息
      * @return false 表示拦截请求
      */
@@ -216,7 +226,7 @@ public class TokenUserInfoInterceptor implements HandlerInterceptor {
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         
-        // 构造Token过期的友好提示响应
+        // 构造 Token 过期的友好提示响应
         R errorResponse = R.error(666, "登录已过期，请重新登录");
         String jsonResponse = JSON.toJSONString(errorResponse);
         

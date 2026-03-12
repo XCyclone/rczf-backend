@@ -31,9 +31,4 @@ public class InfoParameters implements Serializable {
     /** 参数说明 */
     private String parDesc;
 
-    /** 排序 */
-    private Integer sort;
-
-    /** 状态：0-禁用；1-启用 */
-    private Integer status;
 }

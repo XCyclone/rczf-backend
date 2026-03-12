@@ -55,7 +55,7 @@ public class BusinessUserDTO
     /** 注册类型：1-企业员工；2-机关单位员工；3-领军、优青人才 */
     @NotNull(message = "请选择注册类型", groups = Save.class)
     @Min(value = 1, message = "注册类型参数错误", groups = Save.class)
-    @Max(value = 3, message = "注册类型参数错误", groups = Save.class)
+    @Max(value = 4, message = "注册类型参数错误", groups = Save.class)
     private Integer regType;
 
     /** 工作单位ID */

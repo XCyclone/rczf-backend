@@ -57,9 +57,16 @@ public interface PublicService {
     R queryEnterpriseLocation();
     
     /**
-     * 根据项目ID查询关联的小区信息
-     * @param projectId 项目ID
-     * @return 小区信息列表，包含小区ID和名称
+     * 根据项目 ID 查询关联的小区信息
+     * @param projectId 项目 ID
+     * @return 小区信息列表，包含小区 ID 和名称
      */
     R queryCommunitiesByProject(String projectId);
+    
+    /**
+     * 公共查询房屋信息列表（支持模糊搜索）
+     * @param queryDTO 查询条件
+     * @return 房屋信息列表
+     */
+    R queryPublicHouseInfoList(Object queryDTO);
 }

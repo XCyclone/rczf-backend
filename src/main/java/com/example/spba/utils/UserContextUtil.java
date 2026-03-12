@@ -4,7 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 
 /**
  * 用户上下文工具类
- * 用于在线程本地存储用户相关信息
+ * 用于存储和获取当前登录用户信息
  */
 public class UserContextUtil {
     
@@ -13,25 +13,25 @@ public class UserContextUtil {
     private static final ThreadLocal<Integer> USER_TYPE_HOLDER = new ThreadLocal<>();
 
     /**
-     * 设置当前用户ID
-     * @param userId 用户ID
+     * 设置当前用户 ID
+     * @param userId 用户 ID
      */
     public static void setUserId(String userId) {
         USER_ID_HOLDER.set(userId);
     }
 
     /**
-     * 获取当前用户ID
-     * @return 用户ID
+     * 获取当前用户 ID
+     * @return 用户 ID
      */
     public static String getUserId() {
-        // 首先尝试从ThreadLocal获取
+        // 首先尝试从 ThreadLocal 获取
         String userId = USER_ID_HOLDER.get();
         if (userId != null) {
             return userId;
         }
         
-        // 如果ThreadLocal中没有，则从Sa-Token中获取
+        // 如果 ThreadLocal 中没有，则从 Sa-Token 中获取
         if (StpUtil.isLogin()) {
             return StpUtil.getLoginIdAsString();
         }
@@ -79,4 +79,7 @@ public class UserContextUtil {
         USER_NAME_HOLDER.remove();
         USER_TYPE_HOLDER.remove();
     }
+
+//    public static String getUserIdCard() {
+//    }
 }

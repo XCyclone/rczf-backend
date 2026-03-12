@@ -3,7 +3,7 @@ app:
   environment: dev
 
 server:
-  port: 8082
+  port: 8084
   # 开启优雅停机
   shutdown: graceful
   servlet:

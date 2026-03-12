@@ -62,9 +62,6 @@ public class BusinessUser implements Serializable
     /** 工作单位ID */
     private String companyId;
 
-    /** 工作单位名称 */
-    private String companyName;
-
     /** 保留字段1 */
     private String reserve1;
 

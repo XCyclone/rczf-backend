@@ -8,12 +8,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Sa-Token 配置类
+ * 负责配置 Sa-Token 的拦截器和 token 相关设置
+ */
 @Configuration
 public class SaTokenConfigure implements WebMvcConfigurer
 {
 
     /**
-     * 注册Sa-Token的拦截器
+     * 注册 Sa-Token 的拦截器
      * @param registry
      */
     @Override
@@ -22,15 +26,15 @@ public class SaTokenConfigure implements WebMvcConfigurer
         // 注册路由拦截器，自定义认证规则
         registry.addInterceptor(new SaRouteInterceptor((req, res, handler) ->
         {
-            // 检查token是否过期
+            // 检查 token 是否过期
             if (StpUtil.isLogin()) {
                 long tokenTimeout = StpUtil.getTokenTimeout();
                 if (tokenTimeout <= 0) {
-                    throw new RuntimeException("Token已过期，请重新登录");
+                    throw new RuntimeException("Token 已过期，请重新登录");
                 }
             }
 
-            // 权限认证：匹配restful风格路由、多个条件一起使用
+            // 权限认证：匹配 restful 风格路由、多个条件一起使用
             SaRouter.match(SaHttpMethod.GET).match("/users").check(r ->StpUtil.checkPermission("user:list"));
             SaRouter.match(SaHttpMethod.POST).match("/user").check(r ->StpUtil.checkPermission("user:add"));
             SaRouter.match(SaHttpMethod.PUT).match("/user").check(r ->StpUtil.checkPermission("user:edit"));

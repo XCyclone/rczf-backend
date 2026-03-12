@@ -21,15 +21,7 @@ public interface FileInfoMapper extends BaseMapper<FileInfo> {
      * 根据 ID 查询项目
      */
     @Select("SELECT id, relation_id as relationId, original_name as originalName, file_url as fileUrl, file_type as fileType,file_category as fileCategory FROM file_info WHERE relation_id = #{id}")
-    @Results({
-        @Result(property = "id", column = "id"),
-        @Result(property = "relationId", column = "relation_id"),
-        @Result(property = "originalName", column = "original_name"),
-        @Result(property = "fileUrl", column = "file_url"),
-        @Result(property = "fileType", column = "file_type"),
-        @Result(property = "fileCategory", column = "file_category")
-    })
-    List<Map<String,Object>> selectById(@Param("id") String id);
+    List<FileInfo> selectByRelId(@Param("id") String id);
     
     /**
      * 分页查询文件列表

@@ -50,7 +50,7 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
      */
     private boolean isWithinApplyPeriod(String currentTime, String startTime, String endTime) {
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date currentDate = sdf.parse(currentTime);
 
             // 如果开始时间为空，则认为无开始限制
@@ -84,7 +84,7 @@ public class EnterpriseApplyServiceImpl implements EnterpriseApplyService {
             logger.info("[企业申请提交] 开始处理企业申请，企业ID: {}, 企业名称: {}, 项目ID: {}", userId, userName, submitDTO.getProjectId());
             ProjectInfo project = projectInfoMapper.selectById(submitDTO.getProjectId());
             // 校验申请时间区间
-            String currentTime = Time.getNowTimeDate("yyyyMMdd HH:mm:ss");
+            String currentTime = Time.getNowTimeDate("yyyy-MM-dd HH:mm:ss");
             if (!isWithinApplyPeriod(currentTime, project.getApplyStartTime(), project.getApplyEndTime())) {
                 return R.error("当前不在该项目的申请时间范围内");
             }
